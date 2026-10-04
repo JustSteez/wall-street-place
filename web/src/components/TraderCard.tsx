@@ -7,7 +7,7 @@ import {
   avatarUrl,
   cardNumber,
   cardRole,
-  drawIndices,
+  drawPixels,
   loadImage,
   normalizeHandle,
   pixelate,
@@ -28,7 +28,7 @@ const SEASON_LABEL = 'Season 1'
 export function TraderCard({ teams, player, defaultTeam }: Props) {
   const [input, setInput] = useState('')
   const [handle, setHandle] = useState<string | null>(null)
-  const [avatar, setAvatar] = useState<Uint8Array | null>(null)
+  const [avatar, setAvatar] = useState<Uint8ClampedArray | null>(null)
   const [teamId, setTeamId] = useState<number>(defaultTeam ?? 1)
   const [status, setStatus] = useState<Status>({ kind: 'idle' })
   const [copied, setCopied] = useState(false)
@@ -40,7 +40,7 @@ export function TraderCard({ teams, player, defaultTeam }: Props) {
   }, [defaultTeam])
 
   useEffect(() => {
-    if (avatar && avatarRef.current) drawIndices(avatarRef.current, avatar)
+    if (avatar && avatarRef.current) drawPixels(avatarRef.current, avatar)
   }, [avatar])
 
   const team = teams.find((t) => t.id === teamId) ?? teams[0]
@@ -135,8 +135,7 @@ export function TraderCard({ teams, player, defaultTeam }: Props) {
         <p className="eyebrow">Your trader card</p>
         <h2 id="card-h">Get on the floor</h2>
         <p className="section-sub">
-          Drop your X handle. We pull your profile picture, repaint it in the 16 colours of the canvas, and print your
-          trader card. Download it, post it, flex it.
+          Drop your X handle. We pull your profile picture, turn it into pixel art, and print your trader card. Download it, post it, flex it.
         </p>
 
         <form className="cardlab-form" onSubmit={generate}>

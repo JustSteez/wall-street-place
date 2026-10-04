@@ -59,6 +59,14 @@ export default function App() {
     if (teamId === null || !owned.includes(teamId)) setTeamId(owned[0] ?? null)
   }, [player, teamId])
 
+  // Shared links like /#card: the section renders after load, so jump to it once mounted.
+  useEffect(() => {
+    const id = window.location.hash.slice(1)
+    if (!id) return
+    const t = window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'instant' }), 150)
+    return () => window.clearTimeout(t)
+  }, [])
+
   useEffect(() => {
     if (!DEPLOYMENT) return
     publicClient

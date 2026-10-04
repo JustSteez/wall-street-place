@@ -1,8 +1,4 @@
-import { hexToRgb, PALETTE } from './palette'
-
 export const AVATAR_SIZE = 32
-
-const PALETTE_RGB = PALETTE.map((p) => hexToRgb(p.hex))
 
 /** Valid X handle: 1–15 letters, digits or underscores (leading @ allowed). */
 export function normalizeHandle(input: string): string | null {
@@ -25,23 +21,8 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
   })
 }
 
-/** Nearest palette colour, weighted towards how the eye perceives green. */
-export function nearestColor(r: number, g: number, b: number): number {
-  let best = 0
-  let bestDist = Infinity
-  for (let i = 0; i < PALETTE_RGB.length; i++) {
-    const [pr, pg, pb] = PALETTE_RGB[i]
-    const d = 2 * (r - pr) ** 2 + 4 * (g - pg) ** 2 + 3 * (b - pb) ** 2
-    if (d < bestDist) {
-      bestDist = d
-      best = i
-    }
-  }
-  return best
-}
-
-/** Centre-crop an image to a square and reduce it to AVATAR_SIZE² palette indices. */
-export function pixelate(img: HTMLImageElement, size = AVATAR_SIZE): Uint8Array {
+/** Centre-crop an image to a square and shrink it to AVATAR_SIZE² pixels, keeping its real colours. */
+export function pixelate(img: HTMLImageElement, size = AVATAR_SIZE): Uint8ClampedArray {
   const canvas = document.createElement('canvas')
   canvas.width = size
   canvas.height = size
@@ -50,24 +31,15 @@ export function pixelate(img: HTMLImageElement, size = AVATAR_SIZE): Uint8Array 
   const sx = (img.naturalWidth - side) / 2
   const sy = (img.naturalHeight - side) / 2
   ctx.imageSmoothingQuality = 'high'
-  ctx.filter = 'contrast(1.18) saturate(1.35)'
   ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size)
-  const { data } = ctx.getImageData(0, 0, size, size)
-  const out = new Uint8Array(size * size)
-  for (let i = 0; i < out.length; i++) {
-    out[i] = nearestColor(data[i * 4], data[i * 4 + 1], data[i * 4 + 2])
-  }
-  return out
+  return ctx.getImageData(0, 0, size, size).data
 }
 
-/** Paint palette indices into a canvas at 1px per pixel (scale it up with CSS). */
-export function drawIndices(canvas: HTMLCanvasElement, indices: Uint8Array, size = AVATAR_SIZE): void {
+/** Paint RGBA pixels into a canvas at 1px per pixel (scale it up with CSS or drawImage). */
+export function drawPixels(canvas: HTMLCanvasElement, pixels: Uint8ClampedArray, size = AVATAR_SIZE): void {
   const ctx = canvas.getContext('2d')!
   const image = ctx.createImageData(size, size)
-  indices.forEach((c, i) => {
-    const [r, g, b] = PALETTE_RGB[c]
-    image.data.set([r, g, b, 255], i * 4)
-  })
+  image.data.set(pixels)
   ctx.putImageData(image, 0, 0)
 }
 

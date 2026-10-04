@@ -1,4 +1,4 @@
-import { AVATAR_SIZE, drawIndices } from './pixelate'
+import { AVATAR_SIZE, drawPixels } from './pixelate'
 import { hexToRgb } from './palette'
 
 export interface CardData {
@@ -9,7 +9,7 @@ export interface CardData {
   teamColor: string
   status: string
   season: string
-  avatar: Uint8Array | null
+  avatar: Uint8ClampedArray | null
 }
 
 const W = 1080
@@ -41,7 +41,7 @@ function drawAvatar(ctx: CanvasRenderingContext2D, data: CardData, x: number, y:
     const small = document.createElement('canvas')
     small.width = AVATAR_SIZE
     small.height = AVATAR_SIZE
-    drawIndices(small, data.avatar)
+    drawPixels(small, data.avatar)
     ctx.imageSmoothingEnabled = false
     ctx.drawImage(small, x, y, size, size)
     return
