@@ -30,7 +30,8 @@ import { bell, pop } from './lib/sound'
 export default function App() {
   const wallet = useWallet()
   const { state: game, error, refresh: refreshGame } = useGame()
-  const { player, refresh: refreshPlayer } = usePlayer(wallet.account, game?.teams)
+  const teams = useMemo(() => game?.teams ?? (IS_PRELAUNCH ? PRELAUNCH_TEAMS : []), [game?.teams])
+  const { player, refresh: refreshPlayer } = usePlayer(wallet.account, teams.length ? teams : undefined)
   const trades = useActivity(game?.season)
   const wallNow = useNow()
 
@@ -187,7 +188,6 @@ export default function App() {
 
   const secondsLeft = game ? game.seasonEndsAt - now : undefined
   const seasonEnded = secondsLeft !== undefined && secondsLeft <= 0
-  const teams = useMemo(() => game?.teams ?? (IS_PRELAUNCH ? PRELAUNCH_TEAMS : []), [game?.teams])
   const teamPixels = game?.teamPixels ?? []
 
   const pickTeam = (id: number) => {

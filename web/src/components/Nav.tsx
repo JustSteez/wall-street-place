@@ -36,7 +36,12 @@ export function Nav({ wallet }: { wallet: WalletState }) {
         >
           {muted ? '🔇' : '🔔'}
         </button>
-        {IS_PRELAUNCH ? <a className="pill pill-lime" href="#card">Get your card</a> : <WalletButton wallet={wallet} />}
+        {IS_PRELAUNCH && (
+          <a className="pill pill-ghost nav-card-link" href="#card">
+            Get your card
+          </a>
+        )}
+        <WalletButton wallet={wallet} />
       </div>
     </nav>
   )
@@ -52,7 +57,11 @@ function WalletButton({ wallet }: { wallet: WalletState }) {
   }
   if (!wallet.account) {
     return (
-      <button className="pill pill-lime" onClick={() => wallet.connect().catch(console.error)} disabled={wallet.connecting}>
+      <button
+        className="pill pill-lime"
+        onClick={() => wallet.connect().catch(console.error)}
+        disabled={wallet.connecting}
+      >
         {wallet.connecting ? 'Connecting…' : 'Connect wallet'}
       </button>
     )

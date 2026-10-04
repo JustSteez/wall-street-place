@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Address } from 'viem'
 import { DEPLOYMENT, HAS_FAUCET } from '../config/network'
-import { canvasAbi, mockStockAbi, placeFaucetAbi, placeTokenAbi } from '../lib/abi'
+import { canvasAbi, mockStockAbi, placeFaucetAbi, placeTokenAbi, stockTokenAbi } from '../lib/abi'
 import { publicClient } from '../lib/client'
 import type { Team } from './useGame'
 
@@ -23,6 +23,43 @@ export interface PlayerState {
 }
 
 const POLL_MS = 6000
+const ONE = 10n ** 18n
+
+/**
+ * Before launch there is no canvas contract to ask, so read each Stock Token directly:
+ * share-equivalent = balance × uiMultiplier / 1e18 (ERC-8056), same rule the contract uses.
+ */
+async function loadHoldingsOnly(account: Address, teams: Team[]): Promise<PlayerState> {
+  const [ethBalance, holdings] = await Promise.all([
+    publicClient.getBalance({ address: account }),
+    Promise.all(
+      teams.map(async (team) => {
+        const [balance, multiplier] = await Promise.all([
+          publicClient.readContract({
+            address: team.token,
+            abi: stockTokenAbi,
+            functionName: 'balanceOf',
+            args: [account],
+          }),
+          publicClient
+            .readContract({ address: team.token, abi: stockTokenAbi, functionName: 'uiMultiplier' })
+            .catch(() => ONE),
+        ])
+        const shares = (balance * (multiplier === 0n ? ONE : multiplier)) / ONE
+        return { teamId: team.id, shares, qualifies: shares > 0n && shares >= team.minShares, faucetReadyAt: 0 }
+      }),
+    ),
+  ])
+  return {
+    nextPlaceAt: 0,
+    placeBalance: 0n,
+    canvasAllowance: 0n,
+    snapshotAllowance: 0n,
+    dripReadyAt: 0,
+    ethBalance,
+    holdings,
+  }
+}
 
 async function loadPlayer(account: Address, teams: Team[]): Promise<PlayerState> {
   if (!DEPLOYMENT) throw new Error('No deployment')
@@ -31,21 +68,51 @@ async function loadPlayer(account: Address, teams: Team[]): Promise<PlayerState>
   const [nextPlaceAt, placeBalance, canvasAllowance, snapshotAllowance, ethBalance, dripReadyAt] = await Promise.all([
     publicClient.readContract({ address: canvas, abi: canvasAbi, functionName: 'nextPlaceAt', args: [account] }),
     publicClient.readContract({ address: placeToken, abi: placeTokenAbi, functionName: 'balanceOf', args: [account] }),
-    publicClient.readContract({ address: placeToken, abi: placeTokenAbi, functionName: 'allowance', args: [account, canvas] }),
-    publicClient.readContract({ address: placeToken, abi: placeTokenAbi, functionName: 'allowance', args: [account, snapshot] }),
+    publicClient.readContract({
+      address: placeToken,
+      abi: placeTokenAbi,
+      functionName: 'allowance',
+      args: [account, canvas],
+    }),
+    publicClient.readContract({
+      address: placeToken,
+      abi: placeTokenAbi,
+      functionName: 'allowance',
+      args: [account, snapshot],
+    }),
     publicClient.getBalance({ address: account }),
     HAS_FAUCET
-      ? publicClient.readContract({ address: placeFaucet, abi: placeFaucetAbi, functionName: 'nextDripAt', args: [account] })
+      ? publicClient.readContract({
+          address: placeFaucet,
+          abi: placeFaucetAbi,
+          functionName: 'nextDripAt',
+          args: [account],
+        })
       : Promise.resolve(0n),
   ])
 
   const holdings = await Promise.all(
     teams.map(async (team) => {
       const [shares, qualifies, faucetReadyAt] = await Promise.all([
-        publicClient.readContract({ address: canvas, abi: canvasAbi, functionName: 'sharesOf', args: [account, team.id] }),
-        publicClient.readContract({ address: canvas, abi: canvasAbi, functionName: 'isHolder', args: [account, team.id] }),
+        publicClient.readContract({
+          address: canvas,
+          abi: canvasAbi,
+          functionName: 'sharesOf',
+          args: [account, team.id],
+        }),
+        publicClient.readContract({
+          address: canvas,
+          abi: canvasAbi,
+          functionName: 'isHolder',
+          args: [account, team.id],
+        }),
         HAS_FAUCET
-          ? publicClient.readContract({ address: team.token, abi: mockStockAbi, functionName: 'nextFaucetAt', args: [account] })
+          ? publicClient.readContract({
+              address: team.token,
+              abi: mockStockAbi,
+              functionName: 'nextFaucetAt',
+              args: [account],
+            })
           : Promise.resolve(0n),
       ])
       return { teamId: team.id, shares, qualifies, faucetReadyAt: Number(faucetReadyAt) }
@@ -67,12 +134,12 @@ export function usePlayer(account: Address | null, teams: Team[] | undefined) {
   const [player, setPlayer] = useState<PlayerState | null>(null)
 
   const refresh = useCallback(async () => {
-    if (!DEPLOYMENT || !account || !teams?.length) {
+    if (!account || !teams?.length) {
       setPlayer(null)
       return
     }
     try {
-      setPlayer(await loadPlayer(account, teams))
+      setPlayer(await (DEPLOYMENT ? loadPlayer(account, teams) : loadHoldingsOnly(account, teams)))
     } catch (e) {
       console.error('Failed to load player', e)
     }

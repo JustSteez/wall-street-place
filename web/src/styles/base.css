@@ -91,7 +91,7 @@ img { max-width: 100%; }
   transition: background 240ms var(--ease), color 240ms var(--ease), box-shadow 240ms var(--ease);
 }
 .nav-solid { background: rgba(245, 242, 234, 0.92); color: var(--ink); backdrop-filter: blur(12px); box-shadow: 0 2px 0 var(--ink); }
-.nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; font-size: 17px; }
+.nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; font-size: 17px; white-space: nowrap; }
 .nav-mark { display: grid; grid-template-columns: repeat(2, 9px); gap: 2px; }
 .nav-mark i { width: 9px; height: 9px; display: block; }
 .nav-net {
@@ -99,14 +99,15 @@ img { max-width: 100%; }
   text-transform: uppercase; letter-spacing: 0.08em;
 }
 .nav-links { display: flex; gap: 26px; font-weight: 600; }
-.nav-links a { text-decoration: none; position: relative; }
+.nav-links a { text-decoration: none; position: relative; white-space: nowrap; }
 .nav-links a::after {
   content: ''; position: absolute; left: 0; right: 0; bottom: -4px; height: 3px; background: var(--lime);
   transform: scaleX(0); transform-origin: left; transition: transform 220ms var(--ease);
 }
 .nav-links a:hover::after { transform: scaleX(1); }
 .nav-actions { display: flex; align-items: center; gap: 10px; }
-@media (max-width: 860px) { .nav-links { display: none; } }
+@media (max-width: 1080px) { .nav-links { display: none; } }
+@media (max-width: 640px) { .nav-card-link { display: none; } }
 @media (max-width: 520px) { .nav-logo span:not(.nav-mark) { display: none; } .nav-net { display: none; } }
 
 /* ---------------------------------------------------------------- misc */

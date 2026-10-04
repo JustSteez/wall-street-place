@@ -135,7 +135,8 @@ export function TraderCard({ teams, player, defaultTeam }: Props) {
         <p className="eyebrow">Your trader card</p>
         <h2 id="card-h">Get on the floor</h2>
         <p className="section-sub">
-          Drop your X handle. We pull your profile picture, turn it into pixel art, and print your trader card. Download it, post it, flex it.
+          Drop your X handle. We pull your profile picture, turn it into pixel art, and print your trader card. Download
+          it, post it, flex it.
         </p>
 
         <form className="cardlab-form" onSubmit={generate}>
@@ -200,6 +201,9 @@ export function TraderCard({ teams, player, defaultTeam }: Props) {
           </a>
         </div>
         {handle && <p className="muted small">Tip: download the card, then attach it to your post.</p>}
+        {!player && (
+          <p className="muted small">Connect your wallet to stamp your card “Holder ✓” for the stocks you own.</p>
+        )}
       </div>
 
       <div className="cardlab-stage">

@@ -36,6 +36,11 @@ export const canvasAbi = parseAbi([
   'error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed)',
 ])
 
+export const stockTokenAbi = parseAbi([
+  'function balanceOf(address account) view returns (uint256)',
+  'function uiMultiplier() view returns (uint256)',
+])
+
 export const placeTokenAbi = parseAbi([
   'function balanceOf(address account) view returns (uint256)',
   'function allowance(address owner, address spender) view returns (uint256)',
