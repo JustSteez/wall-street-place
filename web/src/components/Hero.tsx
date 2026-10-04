@@ -1,4 +1,4 @@
-import { IS_DEMO } from '../config/network'
+import { IS_PRELAUNCH } from '../config/network'
 import type { Team } from '../hooks/useGame'
 import { useScrollY } from '../hooks/useInView'
 import { countdown, formatInt } from '../lib/format'
@@ -30,7 +30,7 @@ export function Hero({ season, secondsLeft, teams, teamPixels }: Props) {
       <div className="hero-inner">
         <p className="hero-kicker">
           <span className="live-dot" />{' '}
-          {IS_DEMO ? 'Demo preview · launching on Robinhood Chain' : `Season ${season ?? '–'} is live on Robinhood Chain`}
+          {IS_PRELAUNCH ? 'Launching soon on Robinhood Chain' : `Season ${season ?? '–'} is live on Robinhood Chain`}
         </p>
         <h1 className="hero-title" style={{ transform: `translate3d(0, ${y * -0.12}px, 0)` }}>
           <span className="ht-line ht-paint">Paint</span>
@@ -43,17 +43,21 @@ export function Hero({ season, secondsLeft, teams, teamPixels }: Props) {
           leave your wallet.
         </p>
         <div className="hero-ctas">
-          <a href="#floor" className="pill pill-lime pill-lg">Start painting →</a>
+          {IS_PRELAUNCH ? (
+            <a href="#card" className="pill pill-lime pill-lg">Get your trader card →</a>
+          ) : (
+            <a href="#floor" className="pill pill-lime pill-lg">Start painting →</a>
+          )}
           <a href="#how" className="pill pill-ghost pill-lg">How it works</a>
         </div>
         <dl className="hero-stats">
           <div>
-            <dt>Closing bell</dt>
-            <dd>{secondsLeft === undefined ? '—' : countdown(secondsLeft)}</dd>
+            <dt>{IS_PRELAUNCH ? 'Status' : 'Closing bell'}</dt>
+            <dd>{IS_PRELAUNCH ? 'Launching soon' : secondsLeft === undefined ? '—' : countdown(secondsLeft)}</dd>
           </div>
           <div>
-            <dt>Pixels claimed</dt>
-            <dd>{formatInt(claimed)}</dd>
+            <dt>{IS_PRELAUNCH ? 'Canvas' : 'Pixels claimed'}</dt>
+            <dd>{IS_PRELAUNCH ? '10,000 px' : formatInt(claimed)}</dd>
           </div>
           <div>
             <dt>Teams</dt>

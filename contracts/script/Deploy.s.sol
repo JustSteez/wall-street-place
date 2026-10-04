@@ -13,8 +13,9 @@ import {PlaceFaucet} from "../src/testnet/PlaceFaucet.sol";
 ///   Testnet (mock stocks + faucets):
 ///     forge script script/Deploy.s.sol --sig "testnet()" --rpc-url robinhood_testnet --broadcast
 ///
-///   Mainnet (real Robinhood Stock Tokens from config/teams.mainnet.json):
-///     forge script script/Deploy.s.sol --sig "mainnet()" --rpc-url robinhood --broadcast
+///   Mainnet (real Robinhood Stock Tokens from config/teams.mainnet.json), signing with an
+///   encrypted keystore (cast wallet import <name> --interactive) or a Ledger:
+///     forge script script/Deploy.s.sol --sig "mainnet()" --rpc-url robinhood --broadcast ///       --account <name> --sender <address>        # or: --ledger --sender <address>
 ///
 ///   Env: PRIVATE_KEY (deployer). Mainnet also reads optional OWNER and TREASURY (use a multisig).
 contract Deploy is Script {
@@ -57,8 +58,9 @@ contract Deploy is Script {
 
     function mainnet() external {
         require(block.chainid == 4663, "mainnet() is for Robinhood Chain (4663)");
-        uint256 pk = vm.envUint("PRIVATE_KEY");
-        address deployer = vm.addr(pk);
+        // Prefer --account <keystore> or --ledger (with --sender); PRIVATE_KEY is a fallback.
+        uint256 pk = vm.envOr("PRIVATE_KEY", uint256(0));
+        address deployer = pk == 0 ? msg.sender : vm.addr(pk);
         // Recommended: a multisig for OWNER and TREASURY. Both default to the deployer.
         address finalOwner = vm.envOr("OWNER", deployer);
         address treasury = vm.envOr("TREASURY", deployer);
@@ -67,7 +69,8 @@ contract Deploy is Script {
         string[] memory tickers = vm.parseJsonStringArray(json, ".tickers");
         require(tokens.length > 0 && tokens.length <= 15 && tokens.length == tickers.length, "teams: 1..15");
 
-        vm.startBroadcast(pk);
+        if (pk == 0) vm.startBroadcast();
+        else vm.startBroadcast(pk);
         Core memory core = _deployCore(deployer);
         for (uint256 i; i < tokens.length; ++i) {
             core.canvas.addTeam(tokens[i], MIN_SHARES, tickers[i]);

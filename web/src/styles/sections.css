@@ -205,4 +205,8 @@
 .credits h3 { margin: 0 0 10px; font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lime); }
 .credits p, .credits li { color: rgba(255, 255, 255, 0.8); font-size: 15px; }
 .credits ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
-.credits-fine { margin-top: 40px; font-size: 13px !important; color: rgba(255, 255, 255, 0.5) !important; }
+.credits-photos { margin-top: 36px; font-size: 12px; color: rgba(255, 255, 255, 0.45); }
+.credits-photos summary { cursor: pointer; width: max-content; }
+.credits-photos summary:hover { color: rgba(255, 255, 255, 0.8); }
+.credits-photos ul { margin-top: 8px; }
+.credits-photos li { font-size: 12px !important; color: rgba(255, 255, 255, 0.55) !important; }

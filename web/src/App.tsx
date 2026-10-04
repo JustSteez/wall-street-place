@@ -3,7 +3,8 @@ import { maxUint256 } from 'viem'
 import { ActivityFeed } from './components/ActivityFeed'
 import { type Burst, CanvasBoard } from './components/CanvasBoard'
 import { Credits } from './components/Credits'
-import { DemoDesk } from './components/DemoDesk'
+import { FloorSoon } from './components/FloorSoon'
+import { TraderCard } from './components/TraderCard'
 import { Desk } from './components/Desk'
 import { FaucetPanel } from './components/FaucetPanel'
 import { Gallery } from './components/Gallery'
@@ -13,7 +14,8 @@ import { Standings } from './components/Standings'
 import { Story } from './components/Story'
 import { TeamCards } from './components/TeamCards'
 import { Toasts } from './components/Toasts'
-import { DEPLOYMENT, explorerAddress, HAS_FAUCET, IS_DEMO } from './config/network'
+import { DEPLOYMENT, explorerAddress, HAS_FAUCET, IS_PRELAUNCH } from './config/network'
+import { PRELAUNCH_TEAMS } from './config/teams'
 import { useActivity } from './hooks/useActivity'
 import { type Team, useGame } from './hooks/useGame'
 import { useNow } from './hooks/useNow'
@@ -177,7 +179,8 @@ export default function App() {
 
   const secondsLeft = game ? game.seasonEndsAt - now : undefined
   const seasonEnded = secondsLeft !== undefined && secondsLeft <= 0
-  const teams = useMemo(() => game?.teams ?? [], [game?.teams])
+  const teams = useMemo(() => game?.teams ?? (IS_PRELAUNCH ? PRELAUNCH_TEAMS : []), [game?.teams])
+  const teamPixels = game?.teamPixels ?? []
 
   const pickTeam = (id: number) => {
     if (player?.holdings.find((h) => h.teamId === id)?.qualifies) setTeamId(id)
@@ -187,28 +190,25 @@ export default function App() {
   return (
     <>
       <Nav wallet={wallet} />
-      <Hero season={game?.season} secondsLeft={secondsLeft} teams={teams} teamPixels={game?.teamPixels ?? []} />
+      <Hero season={game?.season} secondsLeft={secondsLeft} teams={teams} teamPixels={teamPixels} />
       <Story secondsLeft={secondsLeft} />
-      {game && (
-        <TeamCards teams={teams} teamPixels={game.teamPixels} player={player} selectedTeam={teamId} onPick={pickTeam} />
+      {teams.length > 0 && (
+        <TeamCards teams={teams} teamPixels={teamPixels} player={player} selectedTeam={teamId} onPick={pickTeam} />
       )}
+      <TraderCard teams={teams} player={player} defaultTeam={teamId} />
 
       <main className="floor-wrap" id="floor">
         <div className="floor-photo" style={{ backgroundImage: 'url(./img/nyse-wide.webp)' }} aria-hidden="true" />
         <div className="section-head section-head-light">
-          <p className="eyebrow">{IS_DEMO ? 'Demo' : 'Live'} · Season {game?.season ?? '–'}</p>
+          <p className="eyebrow">{IS_PRELAUNCH ? 'Opening soon' : `Live · Season ${game?.season ?? '–'}`}</p>
           <h2>The trading floor</h2>
           <p className="section-sub">Click a pixel, pick your ink, place your order.</p>
         </div>
         {error && <p className="banner">{error}</p>}
-        {IS_DEMO && (
-          <p className="demo-banner">
-            <b>Demo preview.</b> The contracts launch on Robinhood Chain testnet soon — until then the pixels below are
-            simulated so you can see the floor in action.
-          </p>
-        )}
 
-        {!game ? (
+        {IS_PRELAUNCH ? (
+          <FloorSoon />
+        ) : !game ? (
           <div className="loading">Opening the trading floor…</div>
         ) : (
           <div className="floor">
@@ -223,49 +223,41 @@ export default function App() {
               />
             </div>
             <div className="side">
-              {IS_DEMO ? (
-                <DemoDesk />
-              ) : (
-                <Desk
-                  connected={connected}
-                  teams={teams}
-                  player={player}
-                  canvas={game.canvas}
-                  selected={selected}
-                  protectedUntil={protectedUntil}
-                  teamId={teamId}
-                  color={color}
-                  now={now}
-                  skipCost={game.skipCooldownCost}
-                  protectCost={game.protectCost}
-                  busy={tx.busy}
-                  onTeam={setTeamId}
-                  onColor={setColor}
-                  onPlace={onPlace}
-                  onProtect={onProtect}
-                  onConnect={() => (wallet.account ? wallet.switchChain() : wallet.connect()).catch(console.error)}
-                />
-              )}
+              <Desk
+                connected={connected}
+                teams={teams}
+                player={player}
+                canvas={game.canvas}
+                selected={selected}
+                protectedUntil={protectedUntil}
+                teamId={teamId}
+                color={color}
+                now={now}
+                skipCost={game.skipCooldownCost}
+                protectCost={game.protectCost}
+                busy={tx.busy}
+                onTeam={setTeamId}
+                onColor={setColor}
+                onPlace={onPlace}
+                onProtect={onProtect}
+                onConnect={() => (wallet.account ? wallet.switchChain() : wallet.connect()).catch(console.error)}
+              />
               {HAS_FAUCET && connected && (
                 <FaucetPanel teams={teams} player={player} now={now} busy={tx.busy} onStock={onStock} onDrip={onDrip} />
               )}
             </div>
             <Standings teams={teams} teamPixels={game.teamPixels} />
-            {!IS_DEMO && (
-              <ActivityFeed trades={trades} teams={teams} now={now} onJump={(x, y) => setSelected({ x, y })} />
-            )}
-            {!IS_DEMO && (
-              <Gallery
-                season={game.season}
-                seasonEnded={seasonEnded}
-                teams={teams}
-                mintCost={mintCost}
-                busy={tx.busy}
-                connected={connected}
-                onMint={onMint}
-                onRoll={onRoll}
-              />
-            )}
+            <ActivityFeed trades={trades} teams={teams} now={now} onJump={(x, y) => setSelected({ x, y })} />
+            <Gallery
+              season={game.season}
+              seasonEnded={seasonEnded}
+              teams={teams}
+              mintCost={mintCost}
+              busy={tx.busy}
+              connected={connected}
+              onMint={onMint}
+              onRoll={onRoll}
+            />
           </div>
         )}
       </main>

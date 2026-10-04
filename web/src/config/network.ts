@@ -45,13 +45,13 @@ const NETWORKS: Record<NetworkName, { chain: Chain; deployment: Deployment | nul
   },
 }
 
-export const NETWORK_NAME = (import.meta.env.VITE_NETWORK ?? 'testnet') as NetworkName
+export const NETWORK_NAME = (import.meta.env.VITE_NETWORK ?? 'mainnet') as NetworkName
 export const NETWORK = NETWORKS[NETWORK_NAME] ?? NETWORKS.testnet
 export const CHAIN = NETWORK.chain
 export const DEPLOYMENT = NETWORK.deployment
 export const IS_TESTNET = NETWORK_NAME !== 'mainnet'
-/** No contracts yet: the site runs a simulated preview. */
-export const IS_DEMO = !DEPLOYMENT
+/** Contracts not deployed on this network yet: the site shows its pre-launch state. */
+export const IS_PRELAUNCH = !DEPLOYMENT
 export const HAS_FAUCET = Boolean(DEPLOYMENT && DEPLOYMENT.placeFaucet !== ZERO)
 
 export function explorerTx(hash: string): string | null {

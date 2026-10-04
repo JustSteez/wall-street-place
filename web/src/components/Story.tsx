@@ -58,7 +58,7 @@ export function Story({ secondsLeft }: { secondsLeft: number | undefined }) {
         aside={
           <div className="bell-clock">
             <span>Bell rings in</span>
-            <strong>{secondsLeft === undefined ? '—' : countdown(secondsLeft)}</strong>
+            <strong>{secondsLeft === undefined ? 'Soon' : countdown(secondsLeft)}</strong>
           </div>
         }
       >

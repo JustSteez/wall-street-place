@@ -1,4 +1,4 @@
-import { IS_DEMO, IS_TESTNET, NETWORK_NAME } from '../config/network'
+import { IS_PRELAUNCH, IS_TESTNET, NETWORK_NAME } from '../config/network'
 import { useScrollY } from '../hooks/useInView'
 import { useMuted } from '../hooks/useSound'
 import type { WalletState } from '../hooks/useWallet'
@@ -18,11 +18,12 @@ export function Nav({ wallet }: { wallet: WalletState }) {
           <i style={{ background: '#5B2EFF' }} />
         </span>
         <span>Wall Street Place</span>
-        {IS_DEMO ? <span className="nav-net">demo</span> : IS_TESTNET && <span className="nav-net">{NETWORK_NAME}</span>}
+        {IS_TESTNET && <span className="nav-net">{NETWORK_NAME}</span>}
       </a>
       <div className="nav-links">
         <a href="#how">How it works</a>
         <a href="#teams">Teams</a>
+        <a href="#card">Trader card</a>
         <a href="#floor">Trading floor</a>
       </div>
       <div className="nav-actions">
@@ -35,7 +36,7 @@ export function Nav({ wallet }: { wallet: WalletState }) {
         >
           {muted ? '🔇' : '🔔'}
         </button>
-        {IS_DEMO ? <span className="pill pill-lime">Launching soon</span> : <WalletButton wallet={wallet} />}
+        {IS_PRELAUNCH ? <a className="pill pill-lime" href="#card">Get your card</a> : <WalletButton wallet={wallet} />}
       </div>
     </nav>
   )

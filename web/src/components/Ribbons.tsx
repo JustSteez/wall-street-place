@@ -1,3 +1,4 @@
+import { IS_PRELAUNCH } from '../config/network'
 import type { Team } from '../hooks/useGame'
 import { formatInt } from '../lib/format'
 
@@ -11,7 +12,7 @@ export function Ribbons({ teams, teamPixels }: Props) {
   const ticks = teams.map((t) => (
     <span key={t.id} className="rib-item">
       <i style={{ background: t.color }} />
-      {t.ticker} {formatInt(teamPixels[t.id] ?? 0)} PX
+      {t.ticker} {IS_PRELAUNCH ? 'TEAM' : `${formatInt(teamPixels[t.id] ?? 0)} PX`}
     </span>
   ))
   const slogans = ['HOLD THE STOCK', 'PAINT THE PIXEL', 'TAKE THE STREET', 'RING THE BELL'].map((s) => (

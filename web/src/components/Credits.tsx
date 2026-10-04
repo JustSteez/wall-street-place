@@ -33,28 +33,24 @@ export function Credits({ canvasLink }: { canvasLink: string | null }) {
         <div>
           <h3>Wall Street Place</h3>
           <p>Your stock tokens are only read, never moved. $PLACE is only ever burned.</p>
-          <p>
-            {canvasLink && (
-              <>
-                <a href={canvasLink} target="_blank" rel="noreferrer">Canvas contract</a>
-                {' · '}
-              </>
-            )}
-            <a href="https://github.com/JustSteez/wall-street-place" target="_blank" rel="noreferrer">Source on GitHub</a>
-          </p>
-        </div>
-        <div>
-          <h3>Photo credits</h3>
-          <ul>
-            {PHOTOS.map((p) => (
-              <li key={p.url}>
-                <a href={p.url} target="_blank" rel="noreferrer">{p.what}</a> — {p.who}, {p.license}
-              </li>
-            ))}
-          </ul>
+          {canvasLink && (
+            <p>
+              <a href={canvasLink} target="_blank" rel="noreferrer">Canvas contract</a>
+            </p>
+          )}
         </div>
       </div>
-      <p className="credits-fine">An experiment on Robinhood Chain. Not affiliated with Robinhood or the NYSE. Not financial advice.</p>
+      {/* Required by the photos' CC BY / CC BY-SA licences — kept collapsed to stay out of the way. */}
+      <details className="credits-photos">
+        <summary>Photo credits</summary>
+        <ul>
+          {PHOTOS.map((p) => (
+            <li key={p.url}>
+              <a href={p.url} target="_blank" rel="noreferrer">{p.what}</a> — {p.who}, {p.license}
+            </li>
+          ))}
+        </ul>
+      </details>
     </footer>
   )
 }

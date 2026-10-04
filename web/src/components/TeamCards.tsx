@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { IS_PRELAUNCH } from '../config/network'
 import type { Team } from '../hooks/useGame'
 import type { PlayerState } from '../hooks/usePlayer'
 import { formatInt, formatToken, percent } from '../lib/format'
@@ -11,7 +12,17 @@ interface Props {
   onPick: (teamId: number) => void
 }
 
-function TiltCard({ children, color, active, onClick }: { children: React.ReactNode; color: string; active: boolean; onClick: () => void }) {
+function TiltCard({
+  children,
+  color,
+  active,
+  onClick,
+}: {
+  children: React.ReactNode
+  color: string
+  active: boolean
+  onClick: () => void
+}) {
   const ref = useRef<HTMLButtonElement>(null)
   const onMove = (e: React.PointerEvent) => {
     const el = ref.current
@@ -61,16 +72,24 @@ export function TeamCards({ teams, teamPixels, player, selectedTeam, onPick }: P
           const holding = player?.holdings.find((h) => h.teamId === t.id)
           return (
             <TiltCard key={t.id} color={t.color} active={selectedTeam === t.id} onClick={() => onPick(t.id)}>
-              <span className="tcard-rank">#{rank.get(t.id)}</span>
+              {!IS_PRELAUNCH && <span className="tcard-rank">#{rank.get(t.id)}</span>}
               <span className="tcard-ticker">{t.ticker}</span>
               <span className="tcard-pixels">
-                {formatInt(px)} <small>px · {percent(px, total)}</small>
+                {IS_PRELAUNCH ? (
+                  <small>Opens at launch</small>
+                ) : (
+                  <>
+                    {formatInt(px)} <small>px · {percent(px, total)}</small>
+                  </>
+                )}
               </span>
               <span className="tcard-foot">
                 {holding?.qualifies ? (
                   <b>✓ You hold {formatToken(holding.shares, 2)}</b>
                 ) : (
-                  <span>{holding ? 'Not held yet' : 'Connect to check'}</span>
+                  <span>
+                    {IS_PRELAUNCH ? 'Hold it to paint for it' : holding ? 'Not held yet' : 'Connect to check'}
+                  </span>
                 )}
               </span>
               <span className="tcard-glare" aria-hidden="true" />

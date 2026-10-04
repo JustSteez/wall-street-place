@@ -3,7 +3,6 @@ import type { Address } from 'viem'
 import { DEPLOYMENT } from '../config/network'
 import { canvasAbi } from '../lib/abi'
 import { decodeCanvas } from '../lib/canvas'
-import { demoState, demoTick } from '../lib/demo'
 import { publicClient } from '../lib/client'
 import { teamColor } from '../lib/palette'
 
@@ -29,7 +28,6 @@ export interface GameState {
 }
 
 const POLL_MS = 4000
-const DEMO_TICK_MS = 1500
 
 async function loadTeams(canvas: Address): Promise<Team[]> {
   const count = Number(await publicClient.readContract({ address: canvas, abi: canvasAbi, functionName: 'teamCount' }))
@@ -90,16 +88,6 @@ export function useGame() {
       console.error('Failed to load canvas', e)
       setError('Could not reach Robinhood Chain. Retrying…')
     }
-  }, [])
-
-  // Demo mode: no deployment yet, so simulate a live canvas.
-  useEffect(() => {
-    if (DEPLOYMENT) return
-    setState(demoState())
-    const id = window.setInterval(() => {
-      if (document.visibilityState === 'visible') setState((prev) => (prev ? demoTick(prev) : prev))
-    }, DEMO_TICK_MS)
-    return () => window.clearInterval(id)
   }, [])
 
   useEffect(() => {
