@@ -2,7 +2,7 @@ import { IS_PRELAUNCH, IS_TESTNET, NETWORK_NAME } from '../config/network'
 import { useScrollY } from '../hooks/useInView'
 import { useMuted } from '../hooks/useSound'
 import type { WalletState } from '../hooks/useWallet'
-import { shortAddress } from '../lib/format'
+import { WalletMenu } from './WalletMenu'
 
 export function Nav({ wallet }: { wallet: WalletState }) {
   const scrolled = useScrollY() > 40
@@ -41,37 +41,8 @@ export function Nav({ wallet }: { wallet: WalletState }) {
             Get your card
           </a>
         )}
-        <WalletButton wallet={wallet} />
+        <WalletMenu wallet={wallet} />
       </div>
     </nav>
   )
-}
-
-function WalletButton({ wallet }: { wallet: WalletState }) {
-  if (!wallet.hasProvider) {
-    return (
-      <a className="pill pill-lime" href="https://metamask.io/download/" target="_blank" rel="noreferrer">
-        Get a wallet
-      </a>
-    )
-  }
-  if (!wallet.account) {
-    return (
-      <button
-        className="pill pill-lime"
-        onClick={() => wallet.connect().catch(console.error)}
-        disabled={wallet.connecting}
-      >
-        {wallet.connecting ? 'Connecting…' : 'Connect wallet'}
-      </button>
-    )
-  }
-  if (!wallet.onRightChain) {
-    return (
-      <button className="pill pill-red" onClick={() => wallet.switchChain().catch(console.error)}>
-        Switch network
-      </button>
-    )
-  }
-  return <span className="pill pill-ghost">{shortAddress(wallet.account)}</span>
 }

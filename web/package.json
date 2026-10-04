@@ -13,6 +13,7 @@
     "dev:local": "vite --mode anvil"
   },
   "dependencies": {
+    "@walletconnect/ethereum-provider": "^2.25.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "viem": "^2.57.2"

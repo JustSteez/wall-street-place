@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react'
 import type { Abi, Address } from 'viem'
 import { explorerTx } from '../config/network'
-import { ensureChain, getInjected, publicClient, walletClientFor } from '../lib/client'
+import { ensureChain, publicClient, walletClientFor } from '../lib/client'
+import { getActiveProvider, getActiveWallet } from '../lib/wallets'
 import { friendlyError } from '../lib/errors'
 
 export interface Toast {
@@ -42,7 +43,7 @@ export function useTx(account: Address | null, tickerOf: (teamId: number) => str
 
   const send = useCallback(
     async (req: TxRequest): Promise<boolean> => {
-      const provider = getInjected()
+      const provider = getActiveProvider()
       if (!provider || !account) {
         push({ kind: 'error', message: 'Connect a wallet first.' })
         return false
@@ -50,7 +51,7 @@ export function useTx(account: Address | null, tickerOf: (teamId: number) => str
       setBusy(req.label)
       let pendingId: number | null = null
       try {
-        await ensureChain(provider)
+        if (getActiveWallet()?.kind === 'injected') await ensureChain(provider)
         const { request } = await publicClient.simulateContract({
           account,
           address: req.address,

@@ -22,10 +22,6 @@ declare global {
   }
 }
 
-export function getInjected(): EIP1193Provider | null {
-  return typeof window !== 'undefined' && window.ethereum ? window.ethereum : null
-}
-
 export function walletClientFor(provider: EIP1193Provider, account: Address): WalletClient {
   return createWalletClient({ account, chain: CHAIN, transport: custom(provider) })
 }

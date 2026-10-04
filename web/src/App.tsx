@@ -3,6 +3,7 @@ import { maxUint256 } from 'viem'
 import { ActivityFeed } from './components/ActivityFeed'
 import { type Burst, CanvasBoard } from './components/CanvasBoard'
 import { Credits } from './components/Credits'
+import { openWalletMenu } from './components/WalletMenu'
 import { FloorSoon } from './components/FloorSoon'
 import { TraderCard } from './components/TraderCard'
 import { Desk } from './components/Desk'
@@ -248,7 +249,7 @@ export default function App() {
                 onColor={setColor}
                 onPlace={onPlace}
                 onProtect={onProtect}
-                onConnect={() => (wallet.account ? wallet.switchChain() : wallet.connect()).catch(console.error)}
+                onConnect={() => (wallet.account ? wallet.switchChain().catch(console.error) : openWalletMenu())}
               />
               {HAS_FAUCET && connected && (
                 <FaucetPanel teams={teams} player={player} now={now} busy={tx.busy} onStock={onStock} onDrip={onDrip} />
