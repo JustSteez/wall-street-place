@@ -1,3 +1,4 @@
+import { IS_DEMO } from '../config/network'
 import type { Team } from '../hooks/useGame'
 import { useScrollY } from '../hooks/useInView'
 import { countdown, formatInt } from '../lib/format'
@@ -28,7 +29,8 @@ export function Hero({ season, secondsLeft, teams, teamPixels }: Props) {
 
       <div className="hero-inner">
         <p className="hero-kicker">
-          <span className="live-dot" /> Season {season ?? '–'} is live on Robinhood Chain
+          <span className="live-dot" />{' '}
+          {IS_DEMO ? 'Demo preview · launching on Robinhood Chain' : `Season ${season ?? '–'} is live on Robinhood Chain`}
         </p>
         <h1 className="hero-title" style={{ transform: `translate3d(0, ${y * -0.12}px, 0)` }}>
           <span className="ht-line ht-paint">Paint</span>

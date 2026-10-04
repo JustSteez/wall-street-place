@@ -50,6 +50,8 @@ export const NETWORK = NETWORKS[NETWORK_NAME] ?? NETWORKS.testnet
 export const CHAIN = NETWORK.chain
 export const DEPLOYMENT = NETWORK.deployment
 export const IS_TESTNET = NETWORK_NAME !== 'mainnet'
+/** No contracts yet: the site runs a simulated preview. */
+export const IS_DEMO = !DEPLOYMENT
 export const HAS_FAUCET = Boolean(DEPLOYMENT && DEPLOYMENT.placeFaucet !== ZERO)
 
 export function explorerTx(hash: string): string | null {

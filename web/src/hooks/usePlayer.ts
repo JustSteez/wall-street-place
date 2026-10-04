@@ -67,7 +67,7 @@ export function usePlayer(account: Address | null, teams: Team[] | undefined) {
   const [player, setPlayer] = useState<PlayerState | null>(null)
 
   const refresh = useCallback(async () => {
-    if (!account || !teams?.length) {
+    if (!DEPLOYMENT || !account || !teams?.length) {
       setPlayer(null)
       return
     }
