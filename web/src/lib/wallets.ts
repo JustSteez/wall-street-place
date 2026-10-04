@@ -21,7 +21,8 @@ interface Eip6963Detail {
 }
 
 const LAST_WALLET_KEY = 'wsp:wallet'
-export const WC_PROJECT_ID: string = import.meta.env.VITE_WC_PROJECT_ID ?? ''
+// Reown (WalletConnect) project ID — a public identifier, safe to ship in client code.
+export const WC_PROJECT_ID: string = import.meta.env.VITE_WC_PROJECT_ID ?? '6137e7f021220c6659af9433cd1c3497'
 export const HAS_WALLETCONNECT = WC_PROJECT_ID.length > 0
 
 let active: { option: WalletOption; provider: EIP1193Provider } | null = null
