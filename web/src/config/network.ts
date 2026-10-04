@@ -3,6 +3,10 @@ import { robinhood, robinhoodTestnet } from 'viem/chains'
 import testnetDeployment from './deployments/testnet.json'
 import mainnetDeployment from './deployments/mainnet.json'
 
+// Local anvil addresses (gitignored); absent in CI builds.
+const localFiles = import.meta.glob<{ default: unknown }>('./deployments/local.json', { eager: true })
+const localDeployment = (Object.values(localFiles)[0]?.default ?? null) as Deployment | null
+
 export interface Deployment {
   chainId: number
   placeToken: Address
@@ -36,7 +40,7 @@ const NETWORKS: Record<NetworkName, { chain: Chain; deployment: Deployment | nul
   },
   local: {
     chain: localChain,
-    deployment: testnetDeployment as Deployment | null,
+    deployment: localDeployment,
     explorer: '',
   },
 }

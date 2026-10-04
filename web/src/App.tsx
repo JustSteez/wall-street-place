@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { maxUint256 } from 'viem'
 import { ActivityFeed } from './components/ActivityFeed'
-import { CanvasBoard } from './components/CanvasBoard'
+import { type Burst, CanvasBoard } from './components/CanvasBoard'
+import { Credits } from './components/Credits'
 import { Desk } from './components/Desk'
 import { FaucetPanel } from './components/FaucetPanel'
 import { Gallery } from './components/Gallery'
-import { Masthead } from './components/Masthead'
+import { Hero } from './components/Hero'
+import { Nav } from './components/Nav'
 import { Standings } from './components/Standings'
-import { TickerTape } from './components/TickerTape'
+import { Story } from './components/Story'
+import { TeamCards } from './components/TeamCards'
 import { Toasts } from './components/Toasts'
 import { DEPLOYMENT, explorerAddress, HAS_FAUCET } from './config/network'
 import { useActivity } from './hooks/useActivity'
@@ -19,19 +22,25 @@ import { useWallet } from './hooks/useWallet'
 import { canvasAbi, mockStockAbi, placeFaucetAbi, placeTokenAbi, snapshotAbi } from './lib/abi'
 import { indexOf } from './lib/canvas'
 import { publicClient } from './lib/client'
+import { bell, pop } from './lib/sound'
 
 export default function App() {
   const wallet = useWallet()
   const { state: game, error, refresh: refreshGame } = useGame()
   const { player, refresh: refreshPlayer } = usePlayer(wallet.account, game?.teams)
   const trades = useActivity(game?.season)
-  const now = useNow()
+  const wallNow = useNow()
 
   const [selected, setSelected] = useState<{ x: number; y: number } | null>(null)
   const [teamId, setTeamId] = useState<number | null>(null)
   const [color, setColor] = useState(5)
   const [protectedUntil, setProtectedUntil] = useState(0)
   const [mintCost, setMintCost] = useState(0n)
+  const [burst, setBurst] = useState<Burst | null>(null)
+
+  // Block timestamps are only ~second-accurate, so ignore sub-2s skew.
+  const offset = game && Math.abs(game.clockOffset) > 2 ? game.clockOffset : 0
+  const now = wallNow + offset
 
   const tickerOf = useCallback(
     (id: number) => game?.teams.find((t) => t.id === id)?.ticker ?? `team ${id}`,
@@ -99,7 +108,10 @@ export default function App() {
         : [BigInt(selected.x), BigInt(selected.y), color, teamId],
       label: boosted ? 'Boosting pixel' : 'Placing pixel',
     })
-    if (ok) await afterTx()
+    if (!ok) return
+    pop(color)
+    setBurst({ id: Date.now(), x: selected.x, y: selected.y, color })
+    await afterTx()
   }
 
   const onProtect = async () => {
@@ -131,7 +143,9 @@ export default function App() {
   const onRoll = async () => {
     if (!DEPLOYMENT) return
     const ok = await tx.send({ address: DEPLOYMENT.canvas, abi: canvasAbi, functionName: 'rollSeason', label: 'Ringing the bell' })
-    if (ok) await afterTx()
+    if (!ok) return
+    bell()
+    await afterTx()
   }
 
   const onStock = async (team: Team) => {
@@ -149,33 +163,59 @@ export default function App() {
   const seasonEnded = secondsLeft !== undefined && secondsLeft <= 0
   const teams = useMemo(() => game?.teams ?? [], [game?.teams])
 
+  const pickTeam = (id: number) => {
+    if (player?.holdings.find((h) => h.teamId === id)?.qualifies) setTeamId(id)
+    document.getElementById('floor')?.scrollIntoView({ behavior: 'smooth' })
+  }
+
   if (!DEPLOYMENT) {
     return (
-      <main className="page">
-        <Masthead season={undefined} secondsLeft={undefined} wallet={wallet} />
-        <p className="panel">This network has no deployment yet.</p>
-      </main>
+      <>
+        <Nav wallet={wallet} />
+        <Hero season={undefined} secondsLeft={undefined} teams={[]} teamPixels={[]} />
+        <p className="notice">This network has no deployment yet — check back soon.</p>
+      </>
     )
   }
 
   return (
     <>
-      <main className="page">
-        <Masthead season={game?.season} secondsLeft={secondsLeft} wallet={wallet} />
-        {game && <TickerTape teams={teams} teamPixels={game.teamPixels} />}
+      <Nav wallet={wallet} />
+      <Hero season={game?.season} secondsLeft={secondsLeft} teams={teams} teamPixels={game?.teamPixels ?? []} />
+      <Story secondsLeft={secondsLeft} />
+      {game && (
+        <TeamCards
+          teams={teams}
+          teamPixels={game.teamPixels}
+          player={player}
+          selectedTeam={teamId}
+          onPick={pickTeam}
+        />
+      )}
+
+      <main className="floor-wrap" id="floor">
+        <div className="floor-photo" style={{ backgroundImage: 'url(./img/nyse-wide.webp)' }} aria-hidden="true" />
+        <div className="section-head section-head-light">
+          <p className="eyebrow">Live · Season {game?.season ?? '–'}</p>
+          <h2>The trading floor</h2>
+          <p className="section-sub">Click a pixel, pick your ink, place your order.</p>
+        </div>
         {error && <p className="banner">{error}</p>}
 
         {!game ? (
-          <div className="loading mono">Opening the trading floor…</div>
+          <div className="loading">Opening the trading floor…</div>
         ) : (
           <div className="floor">
-            <CanvasBoard
-              canvas={game.canvas}
-              teams={teams}
-              selected={selected}
-              previewColor={connected ? color : null}
-              onSelect={(x, y) => setSelected({ x, y })}
-            />
+            <div className="billboard">
+              <CanvasBoard
+                canvas={game.canvas}
+                teams={teams}
+                selected={selected}
+                previewColor={connected ? color : null}
+                burst={burst}
+                onSelect={(x, y) => setSelected({ x, y })}
+              />
+            </div>
             <div className="side">
               <Desk
                 connected={connected}
@@ -214,19 +254,9 @@ export default function App() {
             />
           </div>
         )}
-
-        <footer className="colophon">
-          <p>
-            Your stock tokens are only read, never moved. $PLACE is only ever burned.{' '}
-            {explorerAddress(DEPLOYMENT.canvas) && (
-              <a href={explorerAddress(DEPLOYMENT.canvas)!} target="_blank" rel="noreferrer">Canvas contract</a>
-            )}
-            {' · '}
-            <a href="https://github.com/JustSteez/wall-street-place" target="_blank" rel="noreferrer">Source</a>
-          </p>
-          <p className="muted small">An experiment on Robinhood Chain. Not affiliated with Robinhood. Not financial advice.</p>
-        </footer>
       </main>
+
+      <Credits canvasLink={explorerAddress(DEPLOYMENT.canvas)} />
       <Toasts toasts={tx.toasts} onDismiss={tx.dismiss} />
     </>
   )

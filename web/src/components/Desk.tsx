@@ -1,7 +1,9 @@
 import type { Team } from '../hooks/useGame'
 import type { PlayerState } from '../hooks/usePlayer'
 import { pixelAt } from '../lib/canvas'
+import { useState } from 'react'
 import { countdown, formatToken } from '../lib/format'
+import { buzz } from '../lib/sound'
 import { PALETTE } from '../lib/palette'
 
 interface Props {
@@ -32,6 +34,15 @@ export function Desk(props: Props) {
   const isProtected = props.protectedUntil > now
   const ownedTeams = teams.filter((t) => player?.holdings.find((h) => h.teamId === t.id)?.qualifies)
   const canAct = connected && selected && teamId !== null && !busy && !isProtected
+  const [shake, setShake] = useState(0)
+  const onPlaceClick = () => {
+    if (!ready) {
+      buzz()
+      setShake((n) => n + 1)
+      return
+    }
+    props.onPlace(false)
+  }
   const canProtect =
     connected && pixel && pixel.teamId !== 0 && !isProtected && !busy &&
     player?.holdings.find((h) => h.teamId === pixel.teamId)?.qualifies
@@ -91,7 +102,7 @@ export function Desk(props: Props) {
               <span>Pixel</span>
               <span>{selected ? `(${selected.x}, ${selected.y})` : '— select on canvas'}</span>
             </div>
-            <div className="order-line mono">
+            <div key={shake} className={`order-line mono ${shake ? 'shake' : ''}`}>
               <span>Cooldown</span>
               <span className={ready ? 'up' : ''}>{ready ? 'Ready' : countdown(cooldownLeft)}</span>
             </div>
@@ -101,8 +112,8 @@ export function Desk(props: Props) {
                 <span>{countdown(props.protectedUntil - now)}</span>
               </div>
             )}
-            <button className="btn btn-buy" disabled={!canAct || !ready} onClick={() => props.onPlace(false)}>
-              {busy === 'Placing pixel' ? 'Placing…' : 'Place pixel'}
+            <button className="btn btn-buy" disabled={!canAct} onClick={onPlaceClick}>
+              {busy === 'Placing pixel' ? 'Placing…' : ready ? 'Place pixel' : `Cooling down · ${countdown(cooldownLeft)}`}
             </button>
             <button className="btn btn-boost" disabled={!canAct} onClick={() => props.onPlace(true)}>
               Boost — skip cooldown <span className="mono">({formatToken(props.skipCost, 0)} $PLACE)</span>

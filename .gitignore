@@ -16,3 +16,4 @@ web/.next/
 web/dist/
 *.log
 .DS_Store
+web/src/config/deployments/local.json

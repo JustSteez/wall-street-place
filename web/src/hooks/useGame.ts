@@ -23,6 +23,8 @@ export interface GameState {
   teams: Team[]
   canvas: Uint8Array
   teamPixels: number[]
+  /** Chain time minus device time, in seconds — corrects for skewed device clocks. */
+  clockOffset: number
 }
 
 const POLL_MS = 4000
@@ -53,9 +55,10 @@ async function loadSnapshot(canvas: Address, teams: Team[]): Promise<GameState> 
     read<bigint>('skipCooldownCost'),
     read<bigint>('protectCost'),
   ])
-  const [canvasHex, counts] = await Promise.all([
+  const [canvasHex, counts, block] = await Promise.all([
     read<`0x${string}`>('getCanvas', [season]),
     read<readonly number[]>('teamPixels', [season]),
+    publicClient.getBlock(),
   ])
   return {
     season: Number(season),
@@ -66,6 +69,7 @@ async function loadSnapshot(canvas: Address, teams: Team[]): Promise<GameState> 
     teams,
     canvas: decodeCanvas(canvasHex),
     teamPixels: counts.map(Number),
+    clockOffset: Number(block.timestamp) - Date.now() / 1000,
   }
 }
 

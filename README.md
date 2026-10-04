@@ -79,6 +79,16 @@ npm test
 
 Not affiliated with Robinhood. Not financial advice.
 
+## Photo credits
+
+Photos from Wikimedia Commons, used under their licenses (also credited in the site footer):
+
+- *New York Stock Exchange August 2017 02* and *04*: Arild Vågen, CC BY-SA 4.0
+- *Wall Street Sign*: Alex Proimos, CC BY 2.0
+- *New York City, Wall Street, 2012*: Dietmar Rabich, CC BY-SA 4.0
+
+The pixel bull mascot is original art drawn in code.
+
 ## License
 
 MIT
