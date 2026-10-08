@@ -17,3 +17,4 @@ web/dist/
 *.log
 .DS_Store
 web/src/config/deployments/local.json
+wall-street-place-brand-kit.zip
