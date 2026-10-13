@@ -266,6 +266,54 @@ function pixelArt(map, colors, x, y, cell) {
 
 const BELL = ['....D....', '...DGD...', '..DGGGD..', '..DGGGD..', '..DGGGD..', '.DGGGGGD.', 'DGGGGGGGD', 'DDDDDDDDD', '....D....']
 
+// 0 · We're live (testnet launch announcement)
+{
+  // A little painted canvas for the billboard: team towers plus scattered pixels.
+  const GW = 40
+  const GH = 28
+  const cell = 14
+  const grid = Array.from({ length: GH }, () => Array(GW).fill(C.white))
+  let seed = 46630
+  const rand = () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296)
+  TEAM_COLORS.forEach((c, i) => {
+    const x0 = 1 + i * 5
+    const h = 6 + Math.floor(rand() * 16)
+    for (let x = x0; x < x0 + 4; x++)
+      for (let y = GH - h; y < GH; y++) grid[y][x] = (x - x0) % 2 === 1 && y % 2 === 0 ? C.gold : c
+  })
+  for (let n = 0; n < 70; n++) grid[Math.floor(rand() * 12)][Math.floor(rand() * GW)] = TEAM_COLORS[Math.floor(rand() * 8)]
+  const bx = 900
+  const by = 230
+  let pixels = ''
+  grid.forEach((row, y) => row.forEach((c, x) => (pixels += `<rect x="${bx + x * cell}" y="${by + y * cell}" width="${cell}" height="${cell}" fill="${c}"/>`)))
+  const bw = GW * cell
+  const bh = GH * cell
+  const billboard =
+    `<rect x="${bx - 30}" y="${by - 30}" width="${bw + 60}" height="${bh + 60}" rx="30" fill="${C.ink}" stroke="${C.gold}" stroke-width="10" stroke-dasharray="2 20" stroke-linecap="round"/>` +
+    `<g shape-rendering="crispEdges">${pixels}</g>` +
+    `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="none" stroke="${C.white}" stroke-width="4"/>`
+
+  const badge = 'LIVE ON ROBINHOOD CHAIN TESTNET'
+  const badgeW = measure(groteskBold, badge, 26, 2) + 96
+  posts['post-0-live'] = svg(
+    PW,
+    PH,
+    dots(PW, PH, C.white, 26, 2, 0.1) +
+      `<circle cx="1180" cy="420" r="380" fill="${C.purple}" opacity="0.45"/>` +
+      `<rect x="90" y="86" width="${badgeW}" height="60" rx="30" fill="${C.lime}" stroke="${C.ink}" stroke-width="4"/>` +
+      `<circle cx="126" cy="116" r="10" fill="${C.green}" stroke="${C.ink}" stroke-width="3"/>` +
+      text(groteskBold, badge, 150, 126, 26, C.ink, { letterSpacing: 2 }) +
+      text(anton, "WE'RE", 88, 330, 190, C.white) +
+      text(anton, 'LIVE.', 88, 530, 210, C.lime) +
+      lines(groteskMedium, ['10,000 pixels. Every stock is a team.', 'Hold $NVDA, paint for $NVDA.'], 94, 610, 34, C.white) +
+      text(groteskBold, '$PLACE on vibe/vibe · boosts unlock at graduation', 94, 715, 24, C.lime) +
+      billboard +
+      bull(1135, 40, 12, { shadow: 8 }) +
+      ribbon(785, -2, PW, 76, C.purple, C.white, ['TESTNET ONLY · NO REAL FUNDS', 'GRAB FREE TEST STOCKS', SITE], 42, C.lime),
+    C.ink,
+  )
+}
+
 // 1 · Teaser
 posts['post-1-teaser'] = svg(
   PW,
@@ -278,7 +326,7 @@ posts['post-1-teaser'] = svg(
     text(anton, 'ONE STREET.', 90, 640, 150, C.white) +
     skyline(940, 380, 560, 330) +
     bull(1110, 110, 15, { shadow: 10 }) +
-    ribbon(765, -2, PW, 84, C.lime, C.ink, ['LAUNCHING SOON ON ROBINHOOD CHAIN', SITE], 48, C.purple),
+    ribbon(765, -2, PW, 84, C.lime, C.ink, ['LIVE ON ROBINHOOD CHAIN TESTNET', SITE], 48, C.purple),
   C.ink,
 )
 
@@ -289,8 +337,8 @@ posts['post-1-teaser'] = svg(
   const top = 270
   const xs = [90, 580, 1070]
   const steps = [
-    { n: '01', title: 'HOLD A STOCK', body: ['Keep any Robinhood stock', 'token in your wallet.', 'It never leaves.'], band: C.lime },
-    { n: '02', title: 'PAINT A PIXEL', body: ['Paint for your stock’s team.', 'One pixel every 30s.', 'Burn $PLACE to boost.'], band: C.purple },
+    { n: '01', title: 'HOLD A STOCK', body: ['Grab a free test stock', 'from the in-game faucet.', 'It stays in your wallet.'], band: C.lime },
+    { n: '02', title: 'PAINT A PIXEL', body: ['Paint for your stock’s team.', 'One pixel every 30s.', 'Boost with $PLACE.'], band: C.purple },
     { n: '03', title: 'WIN THE WEEK', body: ['Most pixels at Friday’s', 'closing bell wins. The', 'canvas becomes art.'], band: C.gold },
   ]
   const art = [
@@ -321,7 +369,7 @@ posts['post-1-teaser'] = svg(
       text(anton, s.title, x + 34, top + 242, 62, C.ink) +
       lines(groteskMedium, s.body, x + 36, top + 310, 28, '#3b372f')
   })
-  body += text(groteskBold, `LAUNCHING SOON  ·  ${SITE}`, PW / 2, 852, 30, C.purple, { anchor: 'middle', letterSpacing: 2 })
+  body += text(groteskBold, `LIVE ON TESTNET  ·  ${SITE}`, PW / 2, 852, 30, C.purple, { anchor: 'middle', letterSpacing: 2 })
   posts['post-2-how-it-works'] = svg(PW, PH, body, C.paper)
 }
 
