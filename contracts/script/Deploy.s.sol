@@ -2,6 +2,7 @@
 pragma solidity 0.8.28;
 
 import {Script, console2} from "forge-std/Script.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {PlaceToken} from "../src/PlaceToken.sol";
 import {WallStreetPlace} from "../src/WallStreetPlace.sol";
 import {SeasonSnapshot} from "../src/SeasonSnapshot.sol";
@@ -12,6 +13,8 @@ import {PlaceFaucet} from "../src/testnet/PlaceFaucet.sol";
 ///
 ///   Testnet (mock stocks + faucets):
 ///     forge script script/Deploy.s.sol --sig "testnet()" --rpc-url robinhood_testnet --broadcast
+///   Set PLACE_TOKEN=<address> to use an existing $PLACE (e.g. a launchpad token) instead of
+///   deploying one; the $PLACE faucet is then skipped.
 ///
 ///   Mainnet (real Robinhood Stock Tokens from config/teams.mainnet.json), signing with an
 ///   encrypted keystore (cast wallet import <name> --interactive) or a Ledger:
@@ -30,7 +33,7 @@ contract Deploy is Script {
     string[8] internal TICKERS = ["NVDA", "TSLA", "AAPL", "AMZN", "MSFT", "GOOGL", "META", "SPY"];
 
     struct Core {
-        PlaceToken place;
+        IERC20 place;
         WallStreetPlace canvas;
         SeasonSnapshot snapshot;
     }
@@ -40,9 +43,14 @@ contract Deploy is Script {
         address deployer = vm.addr(pk);
         vm.startBroadcast(pk);
 
-        Core memory core = _deployCore(deployer);
-        PlaceFaucet faucet = new PlaceFaucet(core.place, deployer);
-        core.place.transfer(address(faucet), FAUCET_FUNDING);
+        address existingPlace = vm.envOr("PLACE_TOKEN", address(0));
+        Core memory core = _deployCore(deployer, existingPlace);
+        address faucet;
+        if (existingPlace == address(0)) {
+            PlaceFaucet placeFaucet = new PlaceFaucet(core.place, deployer);
+            core.place.transfer(address(placeFaucet), FAUCET_FUNDING);
+            faucet = address(placeFaucet);
+        }
 
         address[] memory tokens = new address[](TICKERS.length);
         for (uint256 i; i < TICKERS.length; ++i) {
@@ -53,7 +61,7 @@ contract Deploy is Script {
         }
         vm.stopBroadcast();
 
-        _write("testnet", core, address(faucet), tokens);
+        _write("testnet", core, faucet, tokens);
     }
 
     function mainnet() external {
@@ -71,7 +79,7 @@ contract Deploy is Script {
 
         if (pk == 0) vm.startBroadcast();
         else vm.startBroadcast(pk);
-        Core memory core = _deployCore(deployer);
+        Core memory core = _deployCore(deployer, address(0));
         for (uint256 i; i < tokens.length; ++i) {
             core.canvas.addTeam(tokens[i], MIN_SHARES, tickers[i]);
         }
@@ -85,8 +93,8 @@ contract Deploy is Script {
         _write("mainnet", core, address(0), tokens);
     }
 
-    function _deployCore(address deployer) private returns (Core memory core) {
-        core.place = new PlaceToken(deployer);
+    function _deployCore(address deployer, address existingPlace) private returns (Core memory core) {
+        core.place = existingPlace == address(0) ? IERC20(address(new PlaceToken(deployer))) : IERC20(existingPlace);
         core.canvas =
             new WallStreetPlace(deployer, core.place, SEASON_DURATION, COOLDOWN, SKIP_COOLDOWN_COST, PROTECT_COST);
         core.snapshot = new SeasonSnapshot(deployer, core.canvas, core.place, SNAPSHOT_COST);

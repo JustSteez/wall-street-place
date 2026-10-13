@@ -16,6 +16,7 @@ interface Props {
   connected: boolean
   onMint: (season: number) => void
   onRoll: () => void
+  placeLocked: boolean
 }
 
 interface PastSeason {
@@ -33,7 +34,7 @@ function renderThumb(canvas: Uint8Array, teams: Team[]): string {
   return el.toDataURL('image/png')
 }
 
-export function Gallery({ season, seasonEnded, teams, mintCost, busy, connected, onMint, onRoll }: Props) {
+export function Gallery({ season, seasonEnded, teams, mintCost, busy, connected, onMint, onRoll, placeLocked }: Props) {
   const [past, setPast] = useState<PastSeason[]>([])
   const byId = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams])
 
@@ -46,7 +47,12 @@ export function Gallery({ season, seasonEnded, teams, mintCost, busy, connected,
       seasons.map(async (s) => {
         const [hex, winner] = await Promise.all([
           publicClient.readContract({ address: canvas, abi: canvasAbi, functionName: 'getCanvas', args: [BigInt(s)] }),
-          publicClient.readContract({ address: canvas, abi: canvasAbi, functionName: 'seasonWinner', args: [BigInt(s)] }),
+          publicClient.readContract({
+            address: canvas,
+            abi: canvasAbi,
+            functionName: 'seasonWinner',
+            args: [BigInt(s)],
+          }),
         ])
         return { season: s, winner: Number(winner), image: renderThumb(decodeCanvas(hex), teams) }
       }),
@@ -64,7 +70,9 @@ export function Gallery({ season, seasonEnded, teams, mintCost, busy, connected,
       {seasonEnded && (
         <div className="bell-rung">
           <p>The closing bell has rung on season {season}.</p>
-          <button className="btn btn-ink" disabled={Boolean(busy)} onClick={onRoll}>Ring in season {season + 1}</button>
+          <button className="btn btn-ink" disabled={Boolean(busy)} onClick={onRoll}>
+            Ring in season {season + 1}
+          </button>
         </div>
       )}
       {past.length === 0 ? (
@@ -80,8 +88,12 @@ export function Gallery({ season, seasonEnded, teams, mintCost, busy, connected,
               <figcaption>
                 <span>Season {p.season}</span>
                 <span className="muted">Winner: {byId.get(p.winner)?.ticker ?? '—'}</span>
-                <button className="btn btn-quiet" disabled={!connected || Boolean(busy)} onClick={() => onMint(p.season)}>
-                  Mint · {formatToken(mintCost, 0)} $PLACE
+                <button
+                  className="btn btn-quiet"
+                  disabled={!connected || Boolean(busy) || placeLocked}
+                  onClick={() => onMint(p.season)}
+                >
+                  {placeLocked ? '🔒 ' : ''}Mint · {formatToken(mintCost, 0)} $PLACE
                 </button>
               </figcaption>
             </figure>

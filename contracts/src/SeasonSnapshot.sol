@@ -3,22 +3,27 @@ pragma solidity 0.8.28;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IWallStreetPlace} from "./interfaces/IWallStreetPlace.sol";
 import {CanvasRenderer} from "./CanvasRenderer.sol";
 
 /// @title SeasonSnapshot
-/// @notice Open-edition collectible of a finished Wall Street Place season. Minting burns
+/// @notice Open-edition collectible of a finished Wall Street Place season. Minting spends
 ///         $PLACE; the artwork is rendered on-chain from the frozen season canvas.
 contract SeasonSnapshot is ERC721, Ownable {
+    using SafeERC20 for IERC20;
+
     using Strings for uint256;
 
     uint256 public constant MAX_MINT_COST = 10_000 ether;
 
     IWallStreetPlace public immutable canvas;
-    ERC20Burnable public immutable placeToken;
+    address public constant DEAD = 0x000000000000000000000000000000000000dEaD;
+
+    IERC20 public immutable placeToken;
 
     uint256 public mintCost;
     uint256 public totalMinted;
@@ -32,7 +37,7 @@ contract SeasonSnapshot is ERC721, Ownable {
     error OutOfRange();
     error CostAboveMax(uint256 cost, uint256 maxCost);
 
-    constructor(address initialOwner, IWallStreetPlace canvas_, ERC20Burnable placeToken_, uint256 mintCost_)
+    constructor(address initialOwner, IWallStreetPlace canvas_, IERC20 placeToken_, uint256 mintCost_)
         ERC721("Wall Street Place Season", "WSPS")
         Ownable(initialOwner)
     {
@@ -41,13 +46,13 @@ contract SeasonSnapshot is ERC721, Ownable {
         _setMintCost(mintCost_);
     }
 
-    /// @notice Mint a snapshot of a finished season by burning `mintCost` $PLACE.
+    /// @notice Mint a snapshot of a finished season by spending `mintCost` $PLACE (sent to DEAD).
     /// @param maxCost Reverts if the current cost is higher (protects against cost changes).
     function mint(uint256 season, uint256 maxCost) external returns (uint256 tokenId) {
         if (season == 0 || season >= canvas.currentSeason()) revert SeasonNotFinished();
         uint256 cost = mintCost;
         if (cost > maxCost) revert CostAboveMax(cost, maxCost);
-        if (cost != 0) placeToken.burnFrom(msg.sender, cost);
+        if (cost != 0) placeToken.safeTransferFrom(msg.sender, DEAD, cost);
 
         tokenId = ++totalMinted;
         seasonOf[tokenId] = season;

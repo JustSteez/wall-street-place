@@ -41,6 +41,15 @@ export const stockTokenAbi = parseAbi([
   'function uiMultiplier() view returns (uint256)',
 ])
 
+/** Launchpad tokens (vibe/vibe) keep transfers locked until their bonding curve graduates. */
+export const launchTokenAbi = parseAbi(['function curve() view returns (address)'])
+
+export const launchCurveAbi = parseAbi([
+  'function complete() view returns (bool)',
+  'function sold() view returns (uint256)',
+  'function remainingInventory() view returns (uint256)',
+])
+
 export const placeTokenAbi = parseAbi([
   'function balanceOf(address account) view returns (uint256)',
   'function allowance(address owner, address spender) view returns (uint256)',

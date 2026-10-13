@@ -19,6 +19,8 @@ interface Props {
   skipCost: bigint
   protectCost: bigint
   busy: string | null
+  /** $PLACE can't be spent yet (launchpad curve hasn't graduated). */
+  placeLocked: boolean
   onTeam: (id: number) => void
   onColor: (c: number) => void
   onPlace: (boosted: boolean) => void
@@ -44,7 +46,11 @@ export function Desk(props: Props) {
     props.onPlace(false)
   }
   const canProtect =
-    connected && pixel && pixel.teamId !== 0 && !isProtected && !busy &&
+    connected &&
+    pixel &&
+    pixel.teamId !== 0 &&
+    !isProtected &&
+    !busy &&
     player?.holdings.find((h) => h.teamId === pixel.teamId)?.qualifies
 
   return (
@@ -54,14 +60,18 @@ export function Desk(props: Props) {
       {!connected ? (
         <div className="desk-empty">
           <p>Connect a wallet holding a stock token to start painting for its team.</p>
-          <button className="btn btn-ink" onClick={props.onConnect}>Connect wallet</button>
+          <button className="btn btn-ink" onClick={props.onConnect}>
+            Connect wallet
+          </button>
         </div>
       ) : (
         <>
           <fieldset className="field">
             <legend>Team</legend>
             {ownedTeams.length === 0 ? (
-              <p className="muted small">You don't hold any team stock yet{teams.length ? ' — grab some from the faucet below.' : '.'}</p>
+              <p className="muted small">
+                You don't hold any team stock yet{teams.length ? ' — grab some from the faucet below.' : '.'}
+              </p>
             ) : (
               <div className="team-chips">
                 {ownedTeams.map((t) => (
@@ -113,22 +123,42 @@ export function Desk(props: Props) {
               </div>
             )}
             <button className="btn btn-buy" disabled={!canAct} onClick={onPlaceClick}>
-              {busy === 'Placing pixel' ? 'Placing…' : ready ? 'Place pixel' : `Cooling down · ${countdown(cooldownLeft)}`}
+              {busy === 'Placing pixel'
+                ? 'Placing…'
+                : ready
+                  ? 'Place pixel'
+                  : `Cooling down · ${countdown(cooldownLeft)}`}
             </button>
-            <button className="btn btn-boost" disabled={!canAct} onClick={() => props.onPlace(true)}>
-              Boost — skip cooldown <span className="mono">({formatToken(props.skipCost, 0)} $PLACE)</span>
+            <button
+              className="btn btn-boost"
+              disabled={!canAct || props.placeLocked}
+              onClick={() => props.onPlace(true)}
+            >
+              {props.placeLocked ? '🔒 ' : ''}Boost — skip cooldown{' '}
+              <span className="mono">({formatToken(props.skipCost, 0)} $PLACE)</span>
             </button>
-            <button className="btn btn-quiet" disabled={!canProtect} onClick={props.onProtect}>
-              Protect pixel 1h <span className="mono">({formatToken(props.protectCost, 0)} $PLACE)</span>
+            <button className="btn btn-quiet" disabled={!canProtect || props.placeLocked} onClick={props.onProtect}>
+              {props.placeLocked ? '🔒 ' : ''}Protect pixel 1h{' '}
+              <span className="mono">({formatToken(props.protectCost, 0)} $PLACE)</span>
             </button>
+            {props.placeLocked && (
+              <p className="muted small lock-note">Boost and protect unlock when $PLACE graduates on vibe/vibe.</p>
+            )}
           </div>
 
           <dl className="balances mono">
-            <div><dt>$PLACE</dt><dd>{player ? formatToken(player.placeBalance) : '…'}</dd></div>
-            <div><dt>ETH (gas)</dt><dd>{player ? formatToken(player.ethBalance, 4) : '…'}</dd></div>
+            <div>
+              <dt>$PLACE</dt>
+              <dd>{player ? formatToken(player.placeBalance) : '…'}</dd>
+            </div>
+            <div>
+              <dt>ETH (gas)</dt>
+              <dd>{player ? formatToken(player.ethBalance, 4) : '…'}</dd>
+            </div>
           </dl>
           <p className="muted small">
-            Selected ink preview shows on the canvas. Boosts, protection and snapshots burn $PLACE — nothing is deposited.
+            Selected ink preview shows on the canvas. Boosts, protection and snapshots burn $PLACE — nothing is
+            deposited.
           </p>
         </>
       )}

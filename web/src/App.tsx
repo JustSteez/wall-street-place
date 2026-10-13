@@ -3,6 +3,8 @@ import { maxUint256 } from 'viem'
 import { ActivityFeed } from './components/ActivityFeed'
 import { type Burst, CanvasBoard } from './components/CanvasBoard'
 import { Credits } from './components/Credits'
+import { PlacePanel } from './components/PlacePanel'
+import { usePlaceStatus } from './hooks/usePlaceStatus'
 import { openWalletMenu } from './components/WalletMenu'
 import { FloorSoon } from './components/FloorSoon'
 import { TraderCard } from './components/TraderCard'
@@ -15,7 +17,7 @@ import { Standings } from './components/Standings'
 import { Story } from './components/Story'
 import { TeamCards } from './components/TeamCards'
 import { Toasts } from './components/Toasts'
-import { DEPLOYMENT, explorerAddress, HAS_FAUCET, IS_PRELAUNCH } from './config/network'
+import { DEPLOYMENT, explorerAddress, HAS_STOCK_FAUCET, IS_PRELAUNCH } from './config/network'
 import { PRELAUNCH_TEAMS } from './config/teams'
 import { useActivity } from './hooks/useActivity'
 import { type Team, useGame } from './hooks/useGame'
@@ -34,6 +36,7 @@ export default function App() {
   const teams = useMemo(() => game?.teams ?? (IS_PRELAUNCH ? PRELAUNCH_TEAMS : []), [game?.teams])
   const { player, refresh: refreshPlayer } = usePlayer(wallet.account, teams.length ? teams : undefined)
   const trades = useActivity(game?.season)
+  const placeStatus = usePlaceStatus()
   const wallNow = useNow()
 
   const [selected, setSelected] = useState<{ x: number; y: number } | null>(null)
@@ -245,15 +248,17 @@ export default function App() {
                 skipCost={game.skipCooldownCost}
                 protectCost={game.protectCost}
                 busy={tx.busy}
+                placeLocked={placeStatus.locked}
                 onTeam={setTeamId}
                 onColor={setColor}
                 onPlace={onPlace}
                 onProtect={onProtect}
                 onConnect={() => (wallet.account ? wallet.switchChain().catch(console.error) : openWalletMenu())}
               />
-              {HAS_FAUCET && connected && (
+              {HAS_STOCK_FAUCET && connected && (
                 <FaucetPanel teams={teams} player={player} now={now} busy={tx.busy} onStock={onStock} onDrip={onDrip} />
               )}
+              <PlacePanel status={placeStatus} />
             </div>
             <Standings teams={teams} teamPixels={game.teamPixels} />
             <ActivityFeed trades={trades} teams={teams} now={now} onJump={(x, y) => setSelected({ x, y })} />
@@ -266,6 +271,7 @@ export default function App() {
               connected={connected}
               onMint={onMint}
               onRoll={onRoll}
+              placeLocked={placeStatus.locked}
             />
           </div>
         )}

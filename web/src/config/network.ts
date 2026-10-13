@@ -52,7 +52,15 @@ export const DEPLOYMENT = NETWORK.deployment
 export const IS_TESTNET = NETWORK_NAME !== 'mainnet'
 /** Contracts not deployed on this network yet: the site shows its pre-launch state. */
 export const IS_PRELAUNCH = !DEPLOYMENT
-export const HAS_FAUCET = Boolean(DEPLOYMENT && DEPLOYMENT.placeFaucet !== ZERO)
+/** Testnet deployments ship mock stock tokens with a public faucet. */
+export const HAS_STOCK_FAUCET = Boolean(DEPLOYMENT) && IS_TESTNET
+/** A $PLACE faucet only exists when we deployed our own test $PLACE. */
+export const HAS_PLACE_FAUCET = Boolean(DEPLOYMENT && DEPLOYMENT.placeFaucet !== ZERO)
+
+/** Where players buy $PLACE (the vibe/vibe launchpad on testnet). */
+export const PLACE_MARKET_URL: string | null =
+  DEPLOYMENT && IS_TESTNET && !HAS_PLACE_FAUCET ? `https://testnet.vibevibe.fun/token/${DEPLOYMENT.placeToken}` : null
+export const GAS_FAUCET_URL = IS_TESTNET ? 'https://testnet.vibevibe.fun/faucet' : null
 
 export function explorerTx(hash: string): string | null {
   return NETWORK.explorer ? `${NETWORK.explorer}/tx/${hash}` : null

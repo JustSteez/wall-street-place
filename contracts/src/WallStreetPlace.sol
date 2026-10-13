@@ -2,7 +2,8 @@
 pragma solidity 0.8.28;
 
 import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IStockToken} from "./interfaces/IStockToken.sol";
 import {IWallStreetPlace} from "./interfaces/IWallStreetPlace.sol";
@@ -15,6 +16,8 @@ import {IWallStreetPlace} from "./interfaces/IWallStreetPlace.sol";
 ///      Pixels are packed big-endian, 32 per storage word, so a season's words concatenate
 ///      directly into the canvas byte string.
 contract WallStreetPlace is Ownable2Step, IWallStreetPlace {
+    using SafeERC20 for IERC20;
+
     // ---------------------------------------------------------------- constants
 
     uint256 public constant SIZE = 100;
@@ -43,7 +46,10 @@ contract WallStreetPlace is Ownable2Step, IWallStreetPlace {
 
     // ---------------------------------------------------------------- storage
 
-    ERC20Burnable public immutable placeToken;
+    /// @notice Spent $PLACE goes here — permanently out of circulation. Works with tokens that have no burn().
+    address public constant DEAD = 0x000000000000000000000000000000000000dEaD;
+
+    IERC20 public immutable placeToken;
 
     Team[] private _teams; // teamId = index + 1
     mapping(address token => bool) public isTeamToken;
@@ -104,7 +110,7 @@ contract WallStreetPlace is Ownable2Step, IWallStreetPlace {
 
     constructor(
         address initialOwner,
-        ERC20Burnable placeToken_,
+        IERC20 placeToken_,
         uint64 seasonDuration_,
         uint64 cooldown_,
         uint256 skipCooldownCost_,
@@ -125,14 +131,14 @@ contract WallStreetPlace is Ownable2Step, IWallStreetPlace {
         _place(x, y, color, teamId, false);
     }
 
-    /// @notice Paint immediately, ignoring the cooldown, by burning `skipCooldownCost` $PLACE.
+    /// @notice Paint immediately, ignoring the cooldown, by spending `skipCooldownCost` $PLACE (sent to DEAD).
     /// @param maxCost Reverts if the current cost is higher (protects against cost changes).
     function placeBoosted(uint256 x, uint256 y, uint8 color, uint8 teamId, uint256 maxCost) external {
-        _burn(skipCooldownCost, maxCost);
+        _spend(skipCooldownCost, maxCost);
         _place(x, y, color, teamId, true);
     }
 
-    /// @notice Lock a pixel for `PROTECT_DURATION` by burning `protectCost` $PLACE.
+    /// @notice Lock a pixel for `PROTECT_DURATION` by spending `protectCost` $PLACE (sent to DEAD).
     ///         You must hold the stock of the team that currently owns the pixel.
     /// @param maxCost Reverts if the current cost is higher (protects against cost changes).
     function protect(uint256 x, uint256 y, uint256 maxCost) external {
@@ -149,7 +155,7 @@ contract WallStreetPlace is Ownable2Step, IWallStreetPlace {
 
         until = uint64(block.timestamp) + PROTECT_DURATION;
         protectedUntil[season][index] = until;
-        _burn(protectCost, maxCost);
+        _spend(protectCost, maxCost);
 
         emit PixelProtected(season, x, y, until, msg.sender);
     }
@@ -326,9 +332,9 @@ contract WallStreetPlace is Ownable2Step, IWallStreetPlace {
         return m == 0 || m > MAX_MULTIPLIER ? MULTIPLIER_ONE : m;
     }
 
-    function _burn(uint256 cost, uint256 maxCost) private {
+    function _spend(uint256 cost, uint256 maxCost) private {
         if (cost > maxCost) revert CostAboveMax(cost, maxCost);
-        if (cost != 0) placeToken.burnFrom(msg.sender, cost);
+        if (cost != 0) placeToken.safeTransferFrom(msg.sender, DEAD, cost);
     }
 
     /// @dev 1..10 bytes of A-Z, 0-9, '.' or '-' (also keeps metadata JSON safe).

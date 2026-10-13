@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Address } from 'viem'
-import { DEPLOYMENT, HAS_FAUCET } from '../config/network'
+import { DEPLOYMENT, HAS_PLACE_FAUCET, HAS_STOCK_FAUCET } from '../config/network'
 import { canvasAbi, mockStockAbi, placeFaucetAbi, placeTokenAbi, stockTokenAbi } from '../lib/abi'
 import { publicClient } from '../lib/client'
 import type { Team } from './useGame'
@@ -81,7 +81,7 @@ async function loadPlayer(account: Address, teams: Team[]): Promise<PlayerState>
       args: [account, snapshot],
     }),
     publicClient.getBalance({ address: account }),
-    HAS_FAUCET
+    HAS_PLACE_FAUCET
       ? publicClient.readContract({
           address: placeFaucet,
           abi: placeFaucetAbi,
@@ -106,7 +106,7 @@ async function loadPlayer(account: Address, teams: Team[]): Promise<PlayerState>
           functionName: 'isHolder',
           args: [account, team.id],
         }),
-        HAS_FAUCET
+        HAS_STOCK_FAUCET
           ? publicClient.readContract({
               address: team.token,
               abi: mockStockAbi,
