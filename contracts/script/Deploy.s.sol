@@ -39,9 +39,12 @@ contract Deploy is Script {
     }
 
     function testnet() external {
-        uint256 pk = vm.envUint("PRIVATE_KEY");
-        address deployer = vm.addr(pk);
-        vm.startBroadcast(pk);
+        require(block.chainid == 46630, "testnet() is for Robinhood Chain testnet (46630)");
+        // Sign with --account <keystore> --sender <address>, or set PRIVATE_KEY.
+        uint256 pk = vm.envOr("PRIVATE_KEY", uint256(0));
+        address deployer = pk == 0 ? msg.sender : vm.addr(pk);
+        if (pk == 0) vm.startBroadcast();
+        else vm.startBroadcast(pk);
 
         address existingPlace = vm.envOr("PLACE_TOKEN", address(0));
         Core memory core = _deployCore(deployer, existingPlace);
