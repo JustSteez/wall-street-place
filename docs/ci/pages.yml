@@ -33,6 +33,8 @@ jobs:
       - run: npm run build
         env:
           VITE_NETWORK: testnet
+          # Email/social login (Privy). Set as a repository variable; login stays off when empty.
+          VITE_PRIVY_APP_ID: ${{ vars.VITE_PRIVY_APP_ID }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web/dist
