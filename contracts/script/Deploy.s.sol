@@ -36,7 +36,6 @@ contract Deploy is Script {
     }
 
     function testnet() external {
-        require(block.chainid == 46630, "testnet() is for Robinhood Chain Testnet (46630)");
         uint256 pk = vm.envUint("PRIVATE_KEY");
         address deployer = vm.addr(pk);
         vm.startBroadcast(pk);

@@ -45,7 +45,7 @@ const NETWORKS: Record<NetworkName, { chain: Chain; deployment: Deployment | nul
   },
 }
 
-export const NETWORK_NAME = (import.meta.env.VITE_NETWORK ?? 'testnet') as NetworkName
+export const NETWORK_NAME = (import.meta.env.VITE_NETWORK ?? 'mainnet') as NetworkName
 export const NETWORK = NETWORKS[NETWORK_NAME] ?? NETWORKS.testnet
 export const CHAIN = NETWORK.chain
 export const DEPLOYMENT = NETWORK.deployment

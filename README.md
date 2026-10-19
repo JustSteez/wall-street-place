@@ -37,19 +37,12 @@ forge install          # submodules: forge-std, openzeppelin-contracts
 forge test
 ```
 
-Deploy to **testnet** (mock stock tokens + faucets so anyone can play). Easiest is GitHub Actions:
-
-1. Make a throwaway wallet, fund it from the [Robinhood Chain testnet faucet](https://www.alchemy.com/faucets/robinhood-testnet), and add its key as the repository secret `TESTNET_PRIVATE_KEY`.
-2. In Settings → Pages, set the source to **GitHub Actions**.
-3. Actions → **Deploy contracts to testnet** → Run workflow (on `main`). It tests, deploys, commits the addresses and rebuilds the site.
-
-Or locally:
+Deploy to **testnet** (mock stock tokens + faucets so anyone can play):
 
 ```bash
 cp .env.example .env   # PRIVATE_KEY of a funded testnet wallet
 source .env
 forge script script/Deploy.s.sol --sig "testnet()" --rpc-url robinhood_testnet --broadcast
-cd ../web && npm run sync   # then commit both deployments/testnet.json files
 ```
 
 Deploy to **mainnet** with the real Stock Token addresses in `config/teams.mainnet.json` (verified on-chain):
