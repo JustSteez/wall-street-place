@@ -1,0 +1,74 @@
+name: Deploy contracts to testnet
+
+# Run from the Actions tab. Deploys the full game (with mock stock tokens and faucets) to
+# Robinhood Chain Testnet, commits the addresses, and rebuilds the site.
+# Needs a TESTNET_PRIVATE_KEY repository secret: a throwaway wallet funded with testnet ETH.
+on:
+  workflow_dispatch:
+    inputs:
+      redeploy:
+        description: Replace an existing testnet deployment (starts a fresh canvas)
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: deploy-testnet
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      PRIVATE_KEY: ${{ secrets.TESTNET_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Preflight
+        run: |
+          if [ -z "$PRIVATE_KEY" ]; then
+            echo "::error::Add a TESTNET_PRIVATE_KEY repository secret (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+          if [ -f contracts/deployments/testnet.json ] && [ "${{ inputs.redeploy }}" != "true" ]; then
+            echo "::error::Testnet is already deployed. Re-run with 'redeploy' ticked to replace it."
+            exit 1
+          fi
+          address=$(cast wallet address --private-key "$PRIVATE_KEY")
+          balance=$(cast balance "$address" --rpc-url https://rpc.testnet.chain.robinhood.com --ether)
+          echo "Deployer $address has $balance testnet ETH"
+          if [ "$(cast to-wei "$balance")" = "0" ]; then
+            echo "::error::Deployer $address has no testnet ETH. Fund it from https://www.alchemy.com/faucets/robinhood-testnet"
+            exit 1
+          fi
+
+      - name: Test
+        working-directory: contracts
+        run: forge test
+
+      - name: Deploy
+        working-directory: contracts
+        run: forge script script/Deploy.s.sol --sig "testnet()" --rpc-url robinhood_testnet --broadcast --slow
+
+      - name: Sync addresses into the site
+        run: node web/scripts/sync-deployments.mjs
+
+      - name: Commit addresses
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add contracts/deployments/testnet.json web/src/config/deployments/testnet.json
+          git commit -m "chore: testnet deployment addresses"
+          git push
+
+      # Pushes made with the workflow token don't trigger other workflows, so start the site build directly.
+      - name: Rebuild the site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref "${{ github.ref_name }}"
