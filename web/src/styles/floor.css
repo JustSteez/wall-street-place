@@ -85,6 +85,9 @@
 
 /* ---------------------------------------------------------------- desk */
 .desk-empty p { margin-top: 0; }
+.desk-empty .eyebrow { color: var(--muted); }
+.desk-gas { background: var(--gold); border: 2px solid var(--ink); border-radius: 12px; padding: 10px 12px; font-weight: 600; }
+.desk-gas a { color: inherit; }
 .field { border: 0; padding: 0; margin: 0 0 16px; }
 .field legend { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
 .team-chips { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -5,6 +5,8 @@ import { useState } from 'react'
 import { countdown, formatToken } from '../lib/format'
 import { buzz } from '../lib/sound'
 import { PALETTE } from '../lib/palette'
+import { GAS_FAUCET_URL, HAS_STOCK_FAUCET } from '../config/network'
+import { HAS_PRIVY } from '../lib/wallets'
 
 interface Props {
   connected: boolean
@@ -59,9 +61,19 @@ export function Desk(props: Props) {
 
       {!connected ? (
         <div className="desk-empty">
-          <p>Connect a wallet holding a stock token to start painting for its team.</p>
+          <p className="eyebrow">Viewing as guest</p>
+          {pixel && selected && (
+            <p className="mono small">
+              ({selected.x}, {selected.y}) ·{' '}
+              {pixel.teamId === 0 ? 'blank' : `held by ${teams.find((t) => t.id === pixel.teamId)?.ticker ?? 'unknown'}`}
+            </p>
+          )}
+          <p>
+            Browse the canvas, standings and trades freely. To paint, {HAS_PRIVY ? 'log in or connect' : 'connect'} a
+            wallet holding a team's stock token{HAS_STOCK_FAUCET ? ' — the testnet desk hands out free test stock' : ''}.
+          </p>
           <button className="btn btn-ink" onClick={props.onConnect}>
-            Connect wallet
+            {HAS_PRIVY ? 'Log in to paint' : 'Connect wallet'}
           </button>
         </div>
       ) : (
@@ -156,6 +168,13 @@ export function Desk(props: Props) {
               <dd>{player ? formatToken(player.ethBalance, 4) : '…'}</dd>
             </div>
           </dl>
+          {GAS_FAUCET_URL && player && player.ethBalance === 0n && (
+            <p className="desk-gas small">
+              You need a little testnet ETH for gas before you can paint. Get some free from the{' '}
+              <a href={GAS_FAUCET_URL} target="_blank" rel="noreferrer">testnet faucet</a> (paste your address from the
+              wallet menu).
+            </p>
+          )}
           <p className="muted small">
             Selected ink preview shows on the canvas. Boosts, protection and snapshots burn $PLACE — nothing is
             deposited.

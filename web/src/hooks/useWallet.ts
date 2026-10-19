@@ -7,10 +7,12 @@ import {
   disconnectWallet,
   getActiveProvider,
   getActiveWallet,
+  HAS_PRIVY,
   HAS_WALLETCONNECT,
   injectedWallets,
   onActiveChange,
   onWalletsDiscovered,
+  PRIVY_OPTION,
   restoreWallet,
   WALLETCONNECT_OPTION,
   type WalletOption,
@@ -30,7 +32,11 @@ export interface WalletState {
 }
 
 function walletOptions(): WalletOption[] {
-  return HAS_WALLETCONNECT ? [...injectedWallets(), WALLETCONNECT_OPTION] : injectedWallets()
+  return [
+    ...(HAS_PRIVY ? [PRIVY_OPTION] : []),
+    ...injectedWallets(),
+    ...(HAS_WALLETCONNECT ? [WALLETCONNECT_OPTION] : []),
+  ]
 }
 
 export function useWallet(): WalletState {

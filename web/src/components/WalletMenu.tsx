@@ -23,6 +23,7 @@ function WalletIcon({ option }: { option: WalletOption }) {
       </svg>
     )
   }
+  if (option.kind === 'privy') return <span className="wm-fallback" aria-hidden="true">✉️</span>
   return <span className="wm-fallback" aria-hidden="true">👛</span>
 }
 
@@ -63,7 +64,7 @@ export function WalletMenu({ wallet }: { wallet: WalletState }) {
     }
   }
 
-  let label = 'Connect wallet'
+  let label = wallet.options.some((o) => o.kind === 'privy') ? 'Log in' : 'Connect wallet'
   let tone = 'pill-lime'
   if (wallet.account && !wallet.onRightChain && wallet.chainId !== null) {
     label = 'Switch network'
@@ -108,7 +109,7 @@ export function WalletMenu({ wallet }: { wallet: WalletState }) {
             </>
           ) : (
             <>
-              <p className="wm-title">Connect a wallet</p>
+              <p className="wm-title">{wallet.options.some((o) => o.kind === 'privy') ? 'Log in or connect' : 'Connect a wallet'}</p>
               {wallet.options.length === 0 && (
                 <p className="wm-empty">
                   No wallet found.{' '}
@@ -128,6 +129,7 @@ export function WalletMenu({ wallet }: { wallet: WalletState }) {
                   <span>
                     {option.name}
                     {option.kind === 'walletconnect' && <small>Scan with a mobile wallet</small>}
+                    {option.kind === 'privy' && <small>Email, Google or X — we create a wallet for you</small>}
                   </span>
                 </button>
               ))}
