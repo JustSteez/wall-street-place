@@ -186,3 +186,12 @@
 .floor-soon .bull { margin: 0 auto 12px; display: block; }
 .floor-soon h3 { margin: 0 0 8px; font-family: var(--display); font-weight: 400; font-size: clamp(2rem, 1rem + 3vw, 3.4rem); text-transform: uppercase; color: var(--lime); }
 .floor-soon p { margin: 0 auto 22px; max-width: 520px; color: rgba(255, 255, 255, 0.85); font-size: 17px; }
+
+/* ---------------------------------------------------------------- $PLACE launch status */
+.place-panel { background: var(--purple); color: #fff; }
+.place-panel .muted { color: rgba(255, 255, 255, 0.8); }
+.place-state { margin: 0 0 12px; font-weight: 600; }
+.grad { height: 18px; border: 3px solid var(--ink); border-radius: 999px; background: #fff; overflow: hidden; margin-bottom: 8px; }
+.grad span { display: block; height: 100%; background: var(--lime); border-right: 3px solid var(--ink); transition: width 700ms var(--spring); }
+.place-panel .btn-boost { margin-top: 8px; text-decoration: none; color: var(--ink); }
+.lock-note { margin: 0; }

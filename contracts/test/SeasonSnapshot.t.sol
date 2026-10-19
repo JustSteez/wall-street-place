@@ -54,11 +54,10 @@ contract SeasonSnapshotTest is Test {
         vm.stopPrank();
     }
 
-    function test_mint_burnsAndMintsFinishedSeason() public {
+    function test_mint_spendsAndMintsFinishedSeason() public {
         vm.warp(block.timestamp + 7 days);
         canvas.rollSeason();
 
-        uint256 supplyBefore = place.totalSupply();
         vm.prank(alice);
         uint256 id = snapshot.mint(1, MINT_COST);
 
@@ -66,7 +65,7 @@ contract SeasonSnapshotTest is Test {
         assertEq(snapshot.ownerOf(1), alice);
         assertEq(snapshot.seasonOf(1), 1);
         assertEq(snapshot.mintedPerSeason(1), 1);
-        assertEq(place.totalSupply(), supplyBefore - MINT_COST);
+        assertEq(place.balanceOf(snapshot.DEAD()), MINT_COST);
     }
 
     function test_tokenURI_isOnChainJsonWithWinner() public {

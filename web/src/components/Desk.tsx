@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { countdown, formatToken } from '../lib/format'
 import { buzz } from '../lib/sound'
 import { PALETTE } from '../lib/palette'
-import { HAS_FAUCET } from '../config/network'
+import { GAS_FAUCET_URL, HAS_STOCK_FAUCET } from '../config/network'
 import { HAS_PRIVY } from '../lib/wallets'
 
 interface Props {
@@ -21,6 +21,8 @@ interface Props {
   skipCost: bigint
   protectCost: bigint
   busy: string | null
+  /** $PLACE can't be spent yet (launchpad curve hasn't graduated). */
+  placeLocked: boolean
   onTeam: (id: number) => void
   onColor: (c: number) => void
   onPlace: (boosted: boolean) => void
@@ -46,7 +48,11 @@ export function Desk(props: Props) {
     props.onPlace(false)
   }
   const canProtect =
-    connected && pixel && pixel.teamId !== 0 && !isProtected && !busy &&
+    connected &&
+    pixel &&
+    pixel.teamId !== 0 &&
+    !isProtected &&
+    !busy &&
     player?.holdings.find((h) => h.teamId === pixel.teamId)?.qualifies
 
   return (
@@ -64,7 +70,7 @@ export function Desk(props: Props) {
           )}
           <p>
             Browse the canvas, standings and trades freely. To paint, {HAS_PRIVY ? 'log in or connect' : 'connect'} a
-            wallet holding a team's stock token{HAS_FAUCET ? ' — the testnet desk hands out free test stock' : ''}.
+            wallet holding a team's stock token{HAS_STOCK_FAUCET ? ' — the testnet desk hands out free test stock' : ''}.
           </p>
           <button className="btn btn-ink" onClick={props.onConnect}>
             {HAS_PRIVY ? 'Log in to paint' : 'Connect wallet'}
@@ -75,7 +81,9 @@ export function Desk(props: Props) {
           <fieldset className="field">
             <legend>Team</legend>
             {ownedTeams.length === 0 ? (
-              <p className="muted small">You don't hold any team stock yet{teams.length ? ' — grab some from the faucet below.' : '.'}</p>
+              <p className="muted small">
+                You don't hold any team stock yet{teams.length ? ' — grab some from the faucet below.' : '.'}
+              </p>
             ) : (
               <div className="team-chips">
                 {ownedTeams.map((t) => (
@@ -127,29 +135,49 @@ export function Desk(props: Props) {
               </div>
             )}
             <button className="btn btn-buy" disabled={!canAct} onClick={onPlaceClick}>
-              {busy === 'Placing pixel' ? 'Placing…' : ready ? 'Place pixel' : `Cooling down · ${countdown(cooldownLeft)}`}
+              {busy === 'Placing pixel'
+                ? 'Placing…'
+                : ready
+                  ? 'Place pixel'
+                  : `Cooling down · ${countdown(cooldownLeft)}`}
             </button>
-            <button className="btn btn-boost" disabled={!canAct} onClick={() => props.onPlace(true)}>
-              Boost — skip cooldown <span className="mono">({formatToken(props.skipCost, 0)} $PLACE)</span>
+            <button
+              className="btn btn-boost"
+              disabled={!canAct || props.placeLocked}
+              onClick={() => props.onPlace(true)}
+            >
+              {props.placeLocked ? '🔒 ' : ''}Boost — skip cooldown{' '}
+              <span className="mono">({formatToken(props.skipCost, 0)} $PLACE)</span>
             </button>
-            <button className="btn btn-quiet" disabled={!canProtect} onClick={props.onProtect}>
-              Protect pixel 1h <span className="mono">({formatToken(props.protectCost, 0)} $PLACE)</span>
+            <button className="btn btn-quiet" disabled={!canProtect || props.placeLocked} onClick={props.onProtect}>
+              {props.placeLocked ? '🔒 ' : ''}Protect pixel 1h{' '}
+              <span className="mono">({formatToken(props.protectCost, 0)} $PLACE)</span>
             </button>
+            {props.placeLocked && (
+              <p className="muted small lock-note">Boost and protect unlock when $PLACE graduates on vibe/vibe.</p>
+            )}
           </div>
 
           <dl className="balances mono">
-            <div><dt>$PLACE</dt><dd>{player ? formatToken(player.placeBalance) : '…'}</dd></div>
-            <div><dt>ETH (gas)</dt><dd>{player ? formatToken(player.ethBalance, 4) : '…'}</dd></div>
+            <div>
+              <dt>$PLACE</dt>
+              <dd>{player ? formatToken(player.placeBalance) : '…'}</dd>
+            </div>
+            <div>
+              <dt>ETH (gas)</dt>
+              <dd>{player ? formatToken(player.ethBalance, 4) : '…'}</dd>
+            </div>
           </dl>
-          {HAS_FAUCET && player && player.ethBalance === 0n && (
+          {GAS_FAUCET_URL && player && player.ethBalance === 0n && (
             <p className="desk-gas small">
               You need a little testnet ETH for gas before you can paint. Get some free from the{' '}
-              <a href="https://www.alchemy.com/faucets/robinhood-testnet" target="_blank" rel="noreferrer">Alchemy faucet</a>{' '}
-              (paste your address from the wallet menu).
+              <a href={GAS_FAUCET_URL} target="_blank" rel="noreferrer">testnet faucet</a> (paste your address from the
+              wallet menu).
             </p>
           )}
           <p className="muted small">
-            Selected ink preview shows on the canvas. Boosts, protection and snapshots burn $PLACE — nothing is deposited.
+            Selected ink preview shows on the canvas. Boosts, protection and snapshots burn $PLACE — nothing is
+            deposited.
           </p>
         </>
       )}

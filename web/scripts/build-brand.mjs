@@ -230,7 +230,230 @@ assets['token-place'] = svg(
   assets['og-image'] = svg(W, H, body, C.purple)
 }
 
+// ---------------------------------------------------------------- X posts (1600×900)
+const posts = {}
+const PW = 1600
+const PH = 900
+const SITE = 'WALL-STREET-PLACE.VERCEL.APP'
+
+/** Card with a hard offset shadow, like the site's neo-brutal panels. */
+function brutalCard(x, y, w, h, fill, { r = 28, shadow = 12, stroke = 6 } = {}) {
+  return (
+    `<rect x="${x + shadow}" y="${y + shadow}" width="${w}" height="${h}" rx="${r}" fill="${C.ink}"/>` +
+    `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${fill}" stroke="${C.ink}" stroke-width="${stroke}"/>`
+  )
+}
+
+/** Text with a hard ink drop shadow (matches the site's chunky tickers). */
+function shadowText(font, str, x, y, size, fill, offset = 5, opts = {}) {
+  return text(font, str, x + offset, y + offset, size, C.ink, opts) + text(font, str, x, y, size, fill, opts)
+}
+
+/** Several lines of body text. */
+function lines(font, list, x, y, size, fill, leading = 1.35) {
+  return list.map((l, i) => text(font, l, x, y + i * size * leading, size, fill)).join('')
+}
+
+function pixelArt(map, colors, x, y, cell) {
+  let out = ''
+  map.forEach((row, ry) =>
+    [...row].forEach((ch, rx) => {
+      if (ch !== '.') out += `<rect x="${x + rx * cell}" y="${y + ry * cell}" width="${cell}" height="${cell}" fill="${colors[ch]}"/>`
+    }),
+  )
+  return `<g shape-rendering="crispEdges">${out}</g>`
+}
+
+const BELL = ['....D....', '...DGD...', '..DGGGD..', '..DGGGD..', '..DGGGD..', '.DGGGGGD.', 'DGGGGGGGD', 'DDDDDDDDD', '....D....']
+
+// 0 · We're live (testnet launch announcement)
+{
+  // A little painted canvas for the billboard: team towers plus scattered pixels.
+  const GW = 40
+  const GH = 28
+  const cell = 14
+  const grid = Array.from({ length: GH }, () => Array(GW).fill(C.white))
+  let seed = 46630
+  const rand = () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296)
+  TEAM_COLORS.forEach((c, i) => {
+    const x0 = 1 + i * 5
+    const h = 6 + Math.floor(rand() * 16)
+    for (let x = x0; x < x0 + 4; x++)
+      for (let y = GH - h; y < GH; y++) grid[y][x] = (x - x0) % 2 === 1 && y % 2 === 0 ? C.gold : c
+  })
+  for (let n = 0; n < 70; n++) grid[Math.floor(rand() * 12)][Math.floor(rand() * GW)] = TEAM_COLORS[Math.floor(rand() * 8)]
+  const bx = 900
+  const by = 230
+  let pixels = ''
+  grid.forEach((row, y) => row.forEach((c, x) => (pixels += `<rect x="${bx + x * cell}" y="${by + y * cell}" width="${cell}" height="${cell}" fill="${c}"/>`)))
+  const bw = GW * cell
+  const bh = GH * cell
+  const billboard =
+    `<rect x="${bx - 30}" y="${by - 30}" width="${bw + 60}" height="${bh + 60}" rx="30" fill="${C.ink}" stroke="${C.gold}" stroke-width="10" stroke-dasharray="2 20" stroke-linecap="round"/>` +
+    `<g shape-rendering="crispEdges">${pixels}</g>` +
+    `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="none" stroke="${C.white}" stroke-width="4"/>`
+
+  const badge = 'LIVE ON ROBINHOOD CHAIN TESTNET'
+  const badgeW = measure(groteskBold, badge, 26, 2) + 96
+  posts['post-0-live'] = svg(
+    PW,
+    PH,
+    dots(PW, PH, C.white, 26, 2, 0.1) +
+      `<circle cx="1180" cy="420" r="380" fill="${C.purple}" opacity="0.45"/>` +
+      `<rect x="90" y="86" width="${badgeW}" height="60" rx="30" fill="${C.lime}" stroke="${C.ink}" stroke-width="4"/>` +
+      `<circle cx="126" cy="116" r="10" fill="${C.green}" stroke="${C.ink}" stroke-width="3"/>` +
+      text(groteskBold, badge, 150, 126, 26, C.ink, { letterSpacing: 2 }) +
+      text(anton, "WE'RE", 88, 330, 190, C.white) +
+      text(anton, 'LIVE.', 88, 530, 210, C.lime) +
+      lines(groteskMedium, ['10,000 pixels. Every stock is a team.', 'Hold $NVDA, paint for $NVDA.'], 94, 610, 34, C.white) +
+      text(groteskBold, '$PLACE on vibe/vibe · boosts unlock at graduation', 94, 715, 24, C.lime) +
+      billboard +
+      bull(1135, 40, 12, { shadow: 8 }) +
+      ribbon(785, -2, PW, 76, C.purple, C.white, ['TESTNET ONLY · NO REAL FUNDS', 'GRAB FREE TEST STOCKS', SITE], 42, C.lime),
+    C.ink,
+  )
+}
+
+// 1 · Teaser
+posts['post-1-teaser'] = svg(
+  PW,
+  PH,
+  dots(PW, PH, C.white, 26, 2, 0.1) +
+    `<circle cx="1250" cy="420" r="360" fill="${C.purple}" opacity="0.5"/>` +
+    text(groteskBold, 'WALL STREET PLACE', 96, 120, 30, C.lime, { letterSpacing: 5 }) +
+    text(anton, '10,000 PIXELS.', 90, 300, 150, C.white) +
+    text(anton, '8 TEAMS.', 90, 470, 150, C.lime) +
+    text(anton, 'ONE STREET.', 90, 640, 150, C.white) +
+    skyline(940, 380, 560, 330) +
+    bull(1110, 110, 15, { shadow: 10 }) +
+    ribbon(765, -2, PW, 84, C.lime, C.ink, ['LIVE ON ROBINHOOD CHAIN TESTNET', SITE], 48, C.purple),
+  C.ink,
+)
+
+// 2 · How it works
+{
+  const cardW = 440
+  const cardH = 500
+  const top = 270
+  const xs = [90, 580, 1070]
+  const steps = [
+    { n: '01', title: 'HOLD A STOCK', body: ['Grab a free test stock', 'from the in-game faucet.', 'It stays in your wallet.'], band: C.lime },
+    { n: '02', title: 'PAINT A PIXEL', body: ['Paint for your stock’s team.', 'One pixel every 30s.', 'Boost with $PLACE.'], band: C.purple },
+    { n: '03', title: 'WIN THE WEEK', body: ['Most pixels at Friday’s', 'closing bell wins. The', 'canvas becomes art.'], band: C.gold },
+  ]
+  const art = [
+    // NVDA holding chip
+    (x, y) =>
+      `<rect x="${x}" y="${y}" width="230" height="74" rx="37" fill="#76B900" stroke="${C.ink}" stroke-width="5"/>` +
+      text(anton, 'NVDA ✓'.replace(' ✓', ''), x + 30, y + 54, 46, C.white) +
+      `<path d="M${x + 160} ${y + 38} l14 14 l26 -28" fill="none" stroke="${C.white}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>`,
+    // pixel grid
+    (x, y) => {
+      const cols = ['#76B900', '#E82127', '#FF9900', '#00A4EF', C.lime, '#76B900', '#76B900', '#E82127', '#00A4EF', '#76B900', C.white, '#FF9900']
+      return cols
+        .map((c, i) => `<rect x="${x + (i % 6) * 40}" y="${y + Math.floor(i / 6) * 40}" width="34" height="34" rx="5" fill="${c}" stroke="${C.ink}" stroke-width="4"/>`)
+        .join('')
+    },
+    // bell
+    (x, y) => pixelArt(BELL, { D: C.ink, G: C.gold }, x + 60, y - 10, 10),
+  ]
+  let body = dots(PW, PH, C.ink, 26, 2, 0.08) + text(anton, 'HOW TO TAKE THE STREET', 90, 190, 120, C.ink)
+  steps.forEach((s, i) => {
+    const x = xs[i]
+    body +=
+      brutalCard(x, top, cardW, cardH, C.white) +
+      `<path d="M${x + 3} ${top + 28} a25 25 0 0 1 25 -25 h${cardW - 56} a25 25 0 0 1 25 25 v130 h-${cardW - 6} z" fill="${s.band}"/>` +
+      `<line x1="${x}" y1="${top + 158}" x2="${x + cardW}" y2="${top + 158}" stroke="${C.ink}" stroke-width="6"/>` +
+      shadowText(anton, s.n, x + 34, top + 128, 100, i === 1 ? C.white : C.ink, i === 1 ? 5 : 0) +
+      art[i](x + 180, top + 46) +
+      text(anton, s.title, x + 34, top + 242, 62, C.ink) +
+      lines(groteskMedium, s.body, x + 36, top + 310, 28, '#3b372f')
+  })
+  body += text(groteskBold, `LIVE ON TESTNET  ·  ${SITE}`, PW / 2, 852, 30, C.purple, { anchor: 'middle', letterSpacing: 2 })
+  posts['post-2-how-it-works'] = svg(PW, PH, body, C.paper)
+}
+
+// 3 · Pick your side
+{
+  const TICKERS = ['NVDA', 'TSLA', 'AAPL', 'AMZN', 'MSFT', 'GOOGL', 'META', 'SPY']
+  const cw = 330
+  const ch = 220
+  const gx = 36
+  const gy = 40
+  const x0 = (PW - (cw * 4 + gx * 3)) / 2
+  const y0 = 300
+  let body =
+    dots(PW, PH, C.white, 24, 1.8, 0.14) +
+    text(anton, 'PICK YOUR SIDE', 90, 170, 130, C.white) +
+    text(groteskMedium, 'Every stock is a team. Hold any amount of its token to paint in its name.', 94, 232, 30, C.white)
+  TICKERS.forEach((t, i) => {
+    const x = x0 + (i % 4) * (cw + gx)
+    const y = y0 + Math.floor(i / 4) * (ch + gy)
+    const size = fit(anton, t, cw - 70) > 92 ? 92 : fit(anton, t, cw - 70)
+    body +=
+      brutalCard(x, y, cw, ch, C.white, { r: 22, shadow: 10 }) +
+      `<path d="M${x + 3} ${y + 22} a19 19 0 0 1 19 -19 h${cw - 44} a19 19 0 0 1 19 19 v110 h-${cw - 6} z" fill="${TEAM_COLORS[i]}"/>` +
+      `<line x1="${x}" y1="${y + 132}" x2="${x + cw}" y2="${y + 132}" stroke="${C.ink}" stroke-width="5"/>` +
+      shadowText(anton, t, x + 28, y + 112, size, C.white, 5) +
+      text(groteskBold, 'TEAM ' + t, x + 30, y + 186, 26, C.ink, { letterSpacing: 2 })
+  })
+  body += ribbon(820, -1.5, PW, 70, C.lime, C.ink, ['WHICH TEAM ARE YOU ON?', SITE], 40, C.purple)
+  posts['post-3-pick-your-side'] = svg(PW, PH, body, C.purple)
+}
+
+// 4 · Trader card
+{
+  const cx = 1010
+  const cy = 90
+  const cw = 480
+  const ch = 640
+  const inner = `<g transform="rotate(5 ${cx + cw / 2} ${cy + ch / 2})">` +
+    `<rect x="${cx + 16}" y="${cy + 16}" width="${cw}" height="${ch}" rx="40" fill="${C.ink}"/>` +
+    `<defs><linearGradient id="foil" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3DDC84"/><stop offset="0.5" stop-color="${C.purple}"/><stop offset="1" stop-color="${C.gold}"/></linearGradient></defs>` +
+    `<rect x="${cx}" y="${cy}" width="${cw}" height="${ch}" rx="40" fill="url(#foil)" stroke="${C.ink}" stroke-width="6"/>` +
+    `<rect x="${cx + 16}" y="${cy + 16}" width="${cw - 32}" height="${ch - 32}" rx="28" fill="${C.ink}"/>` +
+    text(groteskBold, 'WALL STREET PLACE · TRADER CARD', cx + 40, cy + 62, 15, C.lime, { letterSpacing: 1 }) +
+    text(groteskBold, '#0427', cx + cw - 40, cy + 62, 18, C.lime, { anchor: 'end' }) +
+    `<rect x="${cx + 105}" y="${cy + 88}" width="270" height="270" rx="18" fill="#76B900" stroke="${C.white}" stroke-width="7"/>` +
+    bull(cx + 105 + (270 - BULL_W * 12) / 2, cy + 88 + (270 - BULL_H * 12) / 2, 12, { shadow: 6 }) +
+    `<rect x="${cx + 300}" y="${cy + 322}" width="110" height="54" rx="12" fill="#76B900" stroke="${C.ink}" stroke-width="5"/>` +
+    text(anton, 'NVDA', cx + 355, cy + 362, 34, C.white, { anchor: 'middle' }) +
+    text(anton, '@YOURHANDLE', cx + 40, cy + 450, 58, C.white) +
+    text(groteskBold, 'Floor Trader · Season 1', cx + 42, cy + 490, 22, C.lime) +
+    [['TEAM', 'NVDA'], ['STATUS', 'HOLDER ✓'.replace(' ✓', '')], ['CARD', '#0427']]
+      .map(([k, v], i) => {
+        const bx = cx + 40 + i * 136
+        return `<rect x="${bx}" y="${cy + 512}" width="124" height="74" rx="12" fill="#1B1B20"/>` +
+          text(groteskBold, k, bx + 14, cy + 538, 15, 'rgba(255,255,255,0.6)', { letterSpacing: 1 }) +
+          text(anton, v, bx + 14, cy + 574, 28, C.white)
+      })
+      .join('') +
+    `</g>`
+  posts['post-4-trader-card'] = svg(
+    PW,
+    PH,
+    dots(PW, PH, C.ink, 24, 1.8, 0.12) +
+      text(groteskBold, 'NEW · FREE · TAKES 5 SECONDS', 96, 170, 28, C.purple, { letterSpacing: 3 }) +
+      text(anton, 'GET YOUR', 90, 330, 150, C.ink) +
+      text(anton, 'TRADER CARD', 90, 490, 150, C.purple) +
+      lines(groteskMedium, ['Drop your X handle. We pixelate your PFP,', 'stamp your team and print your card.'], 96, 570, 34, C.ink) +
+      `<rect x="96" y="680" width="${measure(groteskBold, SITE + '/#CARD', 30) + 70}" height="76" rx="38" fill="${C.ink}"/>` +
+      text(groteskBold, SITE + '/#CARD', 131, 729, 30, C.lime) +
+      inner,
+    C.lime,
+  )
+}
+
 // ---------------------------------------------------------------- write SVG + PNG
+const POSTS_DIR = resolve(BRAND, 'posts')
+mkdirSync(POSTS_DIR, { recursive: true })
+for (const [name, content] of Object.entries(posts)) {
+  writeFileSync(resolve(POSTS_DIR, `${name}.svg`), content)
+  const png = new Resvg(content, { fitTo: { mode: 'width', value: PW }, shapeRendering: 0 }).render().asPng()
+  writeFileSync(resolve(POSTS_DIR, `${name}.png`), png)
+  console.log(`✓ ${name}`)
+}
+
 const PNG_SIZES = {
   'mark-bull': [512, 1024],
   'mark-pixels': [64, 512],

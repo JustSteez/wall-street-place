@@ -1,4 +1,4 @@
-import { IS_PRELAUNCH } from '../config/network'
+import { IS_PRELAUNCH, IS_TESTNET } from '../config/network'
 import type { Team } from '../hooks/useGame'
 import { useScrollY } from '../hooks/useInView'
 import { countdown, formatInt } from '../lib/format'
@@ -30,7 +30,7 @@ export function Hero({ season, secondsLeft, teams, teamPixels }: Props) {
       <div className="hero-inner">
         <p className="hero-kicker">
           <span className="live-dot" />{' '}
-          {IS_PRELAUNCH ? 'Launching soon on Robinhood Chain' : `Season ${season ?? '–'} is live on Robinhood Chain`}
+          {IS_PRELAUNCH ? 'Launching soon on Robinhood Chain' : `Season ${season ?? '–'} is live on Robinhood Chain${IS_TESTNET ? ' testnet' : ''}`}
         </p>
         <h1 className="hero-title" style={{ transform: `translate3d(0, ${y * -0.12}px, 0)` }}>
           <span className="ht-line ht-paint">Paint</span>

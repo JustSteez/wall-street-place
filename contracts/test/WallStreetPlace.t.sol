@@ -204,15 +204,14 @@ contract WallStreetPlaceTest is Test {
 
     // ------------------------------------------------------------ boosts
 
-    function test_placeBoosted_skipsCooldownAndBurns() public {
-        uint256 supplyBefore = place.totalSupply();
+    function test_placeBoosted_skipsCooldownAndSpends() public {
         vm.startPrank(alice);
         canvas.place(0, 0, 1, NVDA);
         canvas.placeBoosted(1, 0, 1, NVDA, SKIP_COST);
         vm.stopPrank();
 
         assertEq(place.balanceOf(alice), 1_000 ether - SKIP_COST);
-        assertEq(place.totalSupply(), supplyBefore - SKIP_COST);
+        assertEq(place.balanceOf(canvas.DEAD()), SKIP_COST);
         assertEq(canvas.teamPixels(1)[NVDA], 2);
     }
 
