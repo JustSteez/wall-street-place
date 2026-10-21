@@ -30,7 +30,7 @@ export function ActivityFeed({ trades, teams, now, onJump }: Props) {
                     painted <strong style={{ color: team?.color }}>{team?.ticker ?? '?'}</strong> at ({t.x}, {t.y})
                     {t.boosted && <span className="tag">BOOST</span>}
                   </span>
-                  <span className="muted mono small">{timeAgo(now - t.seenAt)}</span>
+                  <span className="muted mono small">{timeAgo(now - t.placedAt)}</span>
                 </button>
               </li>
             )

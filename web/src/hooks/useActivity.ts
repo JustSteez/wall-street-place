@@ -13,7 +13,8 @@ export interface Trade {
   painter: Address
   boosted: boolean
   blockNumber: bigint
-  seenAt: number
+  /** Unix time (seconds) of the block the pixel was placed in. */
+  placedAt: number
 }
 
 const LOOKBACK_BLOCKS = 20_000n
@@ -39,7 +40,7 @@ export function useActivity(season: number | undefined) {
       try {
         const latest = await publicClient.getBlockNumber()
         let from = cursor.current ?? (latest > LOOKBACK_BLOCKS ? latest - LOOKBACK_BLOCKS : 0n)
-        const fresh: Trade[] = []
+        const fresh: Omit<Trade, 'placedAt'>[] = []
         while (from <= latest && !cancelled) {
           const to = from + MAX_RANGE - 1n < latest ? from + MAX_RANGE - 1n : latest
           const logs = await publicClient.getLogs({
@@ -59,16 +60,28 @@ export function useActivity(season: number | undefined) {
               painter: log.args.painter!,
               boosted: Boolean(log.args.boosted),
               blockNumber: log.blockNumber,
-              seenAt: Date.now() / 1000,
             })
           }
           from = to + 1n
         }
+        // Date each trade by its block, not by when this page first saw it: the first poll
+        // loads up to LOOKBACK_BLOCKS of history at once.
+        const newest = fresh.slice(-MAX_ITEMS)
+        const blocks = [...new Set(newest.map((t) => t.blockNumber))]
+        const times = new Map(
+          await Promise.all(
+            blocks.map(async (blockNumber) => {
+              const block = await publicClient.getBlock({ blockNumber })
+              return [blockNumber, Number(block.timestamp)] as const
+            }),
+          ),
+        )
+        const dated: Trade[] = newest.map((t) => ({ ...t, placedAt: times.get(t.blockNumber)! }))
         cursor.current = latest + 1n
-        if (!cancelled && fresh.length) {
+        if (!cancelled && dated.length) {
           setTrades((prev) => {
             const seen = new Set(prev.map((t) => t.key))
-            const merged = [...fresh.filter((t) => !seen.has(t.key)).reverse(), ...prev]
+            const merged = [...dated.filter((t) => !seen.has(t.key)).reverse(), ...prev]
             return merged.slice(0, MAX_ITEMS)
           })
         }
